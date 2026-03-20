@@ -2,187 +2,149 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRoomStore } from '../store/roomStore';
 import { broadcastBuzz } from '../services/realtime';
-import { useGameStore } from '../store/gameStore';
 import { useAudio } from '../hooks/useAudio';
 
 export const GamePlayer: React.FC = () => {
   const navigate = useNavigate();
   const {
-    myPlayer, currentQuestion, questionActive,
-    answerRevealed, awardedTeam, buzzQueue, roomCode, clientId,
-    gamePhase,
+    myName, myTeam, clientId, roomCode,
+    currentQuestion, questionActive,
+    answerRevealed, awardedTeam, revealedAnswer,
+    buzzQueue, gamePhase,
+    syncedBoard, syncedTurn,
+    syncedTeam1Rounds, syncedTeam2Rounds,
   } = useRoomStore();
-  const { board, team1RoundsWon, team2RoundsWon, requiredRoundsToWin, currentTurn } = useGameStore();
   const { playClick, playWin } = useAudio();
 
   const [buzzed, setBuzzed] = useState(false);
   const [buzzerScale, setBuzzerScale] = useState(1);
   const buzzedRef = useRef(false);
 
-  const team = myPlayer?.team ?? 'none';
+  const team = myTeam;
   const teamColor = team === 'team1' ? '#ff416c' : '#00b09b';
   const teamLabel = team === 'team1' ? 'الفريق الأحمر' : 'الفريق الأخضر';
 
-  // Reset buzz state when question changes
+  // Reset buzz when new question appears
   useEffect(() => {
     setBuzzed(false);
     buzzedRef.current = false;
   }, [questionActive, currentQuestion]);
 
-  // Navigate away if game finishes
+  // Go back to home if game ends
   useEffect(() => {
-    if (gamePhase === 'finished' || gamePhase === 'lobby') {
-      navigate('/');
-    }
+    if (gamePhase === 'finished' || gamePhase === 'lobby') navigate('/');
   }, [gamePhase, navigate]);
 
-  // Play win sound when answer is revealed and own team won
+  // Win sound when own team is awarded
   useEffect(() => {
-    if (answerRevealed && awardedTeam === team && team !== 'none') {
-      playWin();
-    }
+    if (answerRevealed && awardedTeam === team && team !== 'none') playWin();
   }, [answerRevealed, awardedTeam, team, playWin]);
 
   const handleBuzz = async () => {
-    if (!questionActive || buzzed || buzzedRef.current || !myPlayer) return;
+    if (!questionActive || buzzed || buzzedRef.current) return;
     buzzedRef.current = true;
     setBuzzed(true);
     playClick();
-
-    // Haptic feedback (mobile)
-    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-
-    // Animate buzzer
-    setBuzzerScale(0.85);
-    setTimeout(() => setBuzzerScale(1.1), 150);
+    if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
+    setBuzzerScale(0.88);
+    setTimeout(() => setBuzzerScale(1.08), 150);
     setTimeout(() => setBuzzerScale(1), 300);
 
     await broadcastBuzz(roomCode!, {
-      playerId: clientId,
-      playerName: myPlayer.name,
-      team,
-      timestamp: Date.now(),
+      playerId: clientId, playerName: myName, team, timestamp: Date.now(),
     });
   };
 
   const firstBuzz = buzzQueue[0];
   const myBuzzRank = buzzQueue.findIndex(b => b.playerId === clientId);
 
-  // Compute board hex layout for a read-only mini display
-  const hexWidth = 56;
-  const hexHeight = 48.5;
+  const hexW = 54, hexH = 46.8;
 
   return (
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      background: `radial-gradient(circle at 50% 0%, ${teamColor}18 0%, rgb(8,8,15) 60%)`,
+      background: `radial-gradient(circle at 50% 0%, ${teamColor}16 0%, rgb(8,8,15) 65%)`,
       color: 'white', fontFamily: "'Cairo', sans-serif", direction: 'rtl',
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
     }}>
-      {/* Top Bar */}
-      <div style={{
-        padding: '14px 16px 10px', flexShrink: 0,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        borderBottom: '1px solid rgba(255,255,255,0.07)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{
-            width: '36px', height: '36px', borderRadius: '50%',
-            background: `${teamColor}33`, border: `2px solid ${teamColor}`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '0.9rem', fontWeight: '800', color: teamColor,
-          }}>
-            {myPlayer?.name?.[0] ?? '?'}
+      {/* Top bar */}
+      <div style={{ padding: '12px 14px 8px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
+          <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: `${teamColor}28`, border: `2px solid ${teamColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', fontWeight: '800', color: teamColor }}>
+            {myName?.[0] ?? '?'}
           </div>
           <div>
-            <div style={{ fontSize: '0.95rem', fontWeight: '700' }}>{myPlayer?.name}</div>
-            <div style={{ fontSize: '0.75rem', color: teamColor }}>{teamLabel}</div>
+            <div style={{ fontSize: '0.9rem', fontWeight: '700' }}>{myName}</div>
+            <div style={{ fontSize: '0.7rem', color: teamColor }}>{teamLabel}</div>
           </div>
         </div>
-
-        {/* Scoreboard */}
-        <div style={{ display: 'flex', gap: '8px', direction: 'ltr' }}>
-          <div style={{ textAlign: 'center', background: 'rgba(255,65,108,0.15)', border: '1px solid rgba(255,65,108,0.3)', borderRadius: '10px', padding: '4px 12px' }}>
-            <div style={{ fontSize: '1.2rem', fontWeight: '900', color: '#ff416c' }}>{team1RoundsWon}</div>
-            <div style={{ fontSize: '0.65rem', color: '#ff416c' }}>أحمر</div>
+        {/* Scores */}
+        <div style={{ display: 'flex', gap: '6px', direction: 'ltr' }}>
+          <div style={{ textAlign: 'center', background: 'rgba(255,65,108,0.14)', border: '1px solid rgba(255,65,108,0.28)', borderRadius: '9px', padding: '3px 10px' }}>
+            <div style={{ fontSize: '1.1rem', fontWeight: '900', color: '#ff416c' }}>{syncedTeam1Rounds}</div>
+            <div style={{ fontSize: '0.6rem', color: '#ff416c' }}>أحمر</div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', color: '#444', fontSize: '0.8rem' }}>/{requiredRoundsToWin}</div>
-          <div style={{ textAlign: 'center', background: 'rgba(0,176,155,0.15)', border: '1px solid rgba(0,176,155,0.3)', borderRadius: '10px', padding: '4px 12px' }}>
-            <div style={{ fontSize: '1.2rem', fontWeight: '900', color: '#00b09b' }}>{team2RoundsWon}</div>
-            <div style={{ fontSize: '0.65rem', color: '#00b09b' }}>أخضر</div>
+          <div style={{ textAlign: 'center', background: 'rgba(0,176,155,0.14)', border: '1px solid rgba(0,176,155,0.28)', borderRadius: '9px', padding: '3px 10px' }}>
+            <div style={{ fontSize: '1.1rem', fontWeight: '900', color: '#00b09b' }}>{syncedTeam2Rounds}</div>
+            <div style={{ fontSize: '0.6rem', color: '#00b09b' }}>أخضر</div>
           </div>
         </div>
       </div>
 
-      {/* Turn Indicator */}
-      <div style={{
-        padding: '8px 16px', flexShrink: 0, textAlign: 'center',
-        fontSize: '0.9rem', color: '#888',
-      }}>
-        {!questionActive && (
-          <span>
-            دور اختيار الحرف:{' '}
-            <span style={{ color: currentTurn === 'team1' ? '#ff416c' : '#00b09b', fontWeight: '700' }}>
-              {currentTurn === 'team1' ? 'الفريق الأحمر' : 'الفريق الأخضر'}
-            </span>
+      {/* Turn */}
+      {!questionActive && (
+        <div style={{ padding: '6px 14px', flexShrink: 0, textAlign: 'center', fontSize: '0.85rem', color: '#666' }}>
+          دور الاختيار:{' '}
+          <span style={{ color: syncedTurn === 'team1' ? '#ff416c' : '#00b09b', fontWeight: '700' }}>
+            {syncedTurn === 'team1' ? 'الأحمر' : 'الأخضر'}
           </span>
-        )}
-      </div>
-
-      {/* Mini Board */}
-      <div style={{ flexShrink: 0, padding: '0 16px', display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
-        <div style={{ position: 'relative', width: (4 * 0.75 + 1) * hexWidth, height: 5.5 * hexHeight }}>
-          {board.map(hex => {
-            const left = hex.colIndex * (hexWidth * 0.75);
-            const top = hex.row * hexHeight;
-            const bgColor = hex.owner === 'team1' ? 'rgba(255,65,108,0.7)' : hex.owner === 'team2' ? 'rgba(0,176,155,0.7)' : 'rgba(60,60,70,0.8)';
-            return (
-              <div key={hex.id} style={{
-                position: 'absolute', left, top,
-                width: hexWidth, height: hexHeight,
-                clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
-                background: bgColor,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '0.8rem', fontWeight: '800', color: 'white',
-                transition: 'background 0.4s',
-              }}>
-                {hex.letter}
-              </div>
-            );
-          })}
         </div>
-      </div>
+      )}
 
-      {/* Main Content Area */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      {/* Mini board */}
+      {syncedBoard.length > 0 && (
+        <div style={{ flexShrink: 0, padding: '0 14px 4px', display: 'flex', justifyContent: 'center' }}>
+          <div style={{ position: 'relative', width: (4 * 0.75 + 1) * hexW, height: 5.5 * hexH }}>
+            {syncedBoard.map(hex => {
+              const bg = hex.owner === 'team1' ? 'rgba(255,65,108,0.75)' : hex.owner === 'team2' ? 'rgba(0,176,155,0.75)' : 'rgba(55,55,65,0.8)';
+              return (
+                <div key={hex.id} style={{
+                  position: 'absolute',
+                  left: hex.colIndex * (hexW * 0.75),
+                  top: hex.row * hexH,
+                  width: hexW, height: hexH,
+                  clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
+                  background: bg,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '0.75rem', fontWeight: '800', color: 'white',
+                  transition: 'background 0.4s',
+                }}>{hex.letter}</div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
-        {/* Question area */}
+      {/* Main content */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '4px 14px 10px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+
+        {/* Question card */}
         {questionActive && currentQuestion && (
-          <div style={{
-            background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: '16px', padding: '18px', textAlign: 'center',
-            animation: 'fadeInDown 0.5s ease-out',
-          }}>
-            <div style={{ fontSize: '0.85rem', color: '#888', marginBottom: '8px' }}>
-              حرف <span style={{ color: '#f7971e', fontWeight: '800', fontSize: '1rem' }}>{currentQuestion.letter}</span>
+          <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '14px', padding: '16px', textAlign: 'center', animation: 'fadeInDown 0.4s ease-out' }}>
+            <div style={{ fontSize: '0.8rem', color: '#888', marginBottom: '6px' }}>
+              حرف <span style={{ color: '#f7971e', fontWeight: '800', fontSize: '0.95rem' }}>{currentQuestion.letter}</span>
             </div>
-            <p style={{ fontSize: '1.2rem', fontWeight: '800', color: '#fff', margin: '0', lineHeight: '1.6' }}>
+            <p style={{ fontSize: '1.15rem', fontWeight: '800', color: '#fff', margin: 0, lineHeight: '1.65' }}>
               {currentQuestion.question}
             </p>
 
             {answerRevealed && (
-              <div style={{
-                marginTop: '14px', background: 'rgba(247,151,30,0.15)',
-                border: '1px solid rgba(247,151,30,0.4)', borderRadius: '12px', padding: '12px',
-                animation: 'fadeIn 0.5s ease-out',
-              }}>
-                <div style={{ fontSize: '0.8rem', color: '#f7971e', marginBottom: '4px' }}>الجواب</div>
-                <div style={{ fontSize: '1.3rem', fontWeight: '900', color: '#ffd200' }}>
-                  {currentQuestion.answer}
-                </div>
+              <div style={{ marginTop: '12px', background: 'rgba(247,151,30,0.14)', border: '1px solid rgba(247,151,30,0.35)', borderRadius: '10px', padding: '10px', animation: 'fadeIn 0.5s ease-out' }}>
+                <div style={{ fontSize: '0.75rem', color: '#f7971e', marginBottom: '3px' }}>الجواب</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: '900', color: '#ffd200' }}>{revealedAnswer}</div>
                 {awardedTeam && awardedTeam !== 'none' && (
-                  <div style={{ marginTop: '8px', fontSize: '0.9rem', color: awardedTeam === 'team1' ? '#ff416c' : '#00b09b', fontWeight: '700' }}>
-                    🏆 فاز {awardedTeam === 'team1' ? 'الفريق الأحمر' : 'الفريق الأخضر'}
+                  <div style={{ marginTop: '6px', fontSize: '0.9rem', color: awardedTeam === 'team1' ? '#ff6b6b' : '#00d4b4', fontWeight: '700' }}>
+                    🏆 {awardedTeam === 'team1' ? 'الفريق الأحمر فاز' : 'الفريق الأخضر فاز'}
                   </div>
                 )}
               </div>
@@ -190,71 +152,53 @@ export const GamePlayer: React.FC = () => {
           </div>
         )}
 
-        {/* Buzz status */}
+        {/* Buzz result */}
         {firstBuzz && questionActive && (
-          <div style={{ textAlign: 'center', animation: 'fadeIn 0.4s ease-out' }}>
+          <div style={{ textAlign: 'center', animation: 'fadeIn 0.35s ease-out' }}>
             <div style={{
               display: 'inline-block',
-              background: firstBuzz.team === 'team1' ? 'rgba(255,65,108,0.2)' : 'rgba(0,176,155,0.2)',
-              border: `1px solid ${firstBuzz.team === 'team1' ? 'rgba(255,65,108,0.5)' : 'rgba(0,176,155,0.5)'}`,
-              borderRadius: '12px', padding: '10px 20px',
+              background: firstBuzz.team === 'team1' ? 'rgba(255,65,108,0.18)' : 'rgba(0,176,155,0.18)',
+              border: `1px solid ${firstBuzz.team === 'team1' ? 'rgba(255,65,108,0.45)' : 'rgba(0,176,155,0.45)'}`,
+              borderRadius: '12px', padding: '8px 18px',
               color: firstBuzz.team === 'team1' ? '#ff6b6b' : '#00d4b4',
-              fontSize: '1rem', fontWeight: '800',
+              fontSize: '0.95rem', fontWeight: '800',
             }}>
               {firstBuzz.playerId === clientId ? '⚡ أنت ضغطت أولاً!' : `⚡ ${firstBuzz.playerName} ضغط أولاً!`}
             </div>
             {myBuzzRank > 0 && (
-              <div style={{ marginTop: '6px', fontSize: '0.85rem', color: '#666' }}>
-                أنت في المرتبة #{myBuzzRank + 1}
-              </div>
+              <div style={{ marginTop: '5px', fontSize: '0.8rem', color: '#555' }}>أنت في المرتبة #{myBuzzRank + 1}</div>
             )}
           </div>
         )}
       </div>
 
-      {/* BUZZER BUTTON */}
-      <div style={{
-        padding: '12px 24px 28px', flexShrink: 0, textAlign: 'center',
-        background: 'linear-gradient(to top, rgba(0,0,0,0.5), transparent)',
-      }}>
+      {/* BUZZER */}
+      <div style={{ padding: '10px 20px 26px', flexShrink: 0, textAlign: 'center', background: 'linear-gradient(to top, rgba(0,0,0,0.45), transparent)' }}>
         <button
           onClick={handleBuzz}
           disabled={!questionActive || buzzed}
           style={{
-            width: '100%', maxWidth: '340px',
-            height: '90px',
-            borderRadius: '20px',
-            background: !questionActive
-              ? 'rgba(50,50,60,0.6)'
-              : buzzed
-                ? 'linear-gradient(135deg, #555, #444)'
-                : `linear-gradient(135deg, ${teamColor}, ${team === 'team1' ? '#ff4b2b' : '#96c93d'})`,
+            width: '100%', maxWidth: '340px', height: '84px', borderRadius: '20px',
+            background: !questionActive ? 'rgba(40,40,50,0.7)' : buzzed
+              ? 'linear-gradient(135deg, #444, #333)'
+              : `linear-gradient(135deg, ${teamColor}, ${team === 'team1' ? '#ff4b2b' : '#96c93d'})`,
             border: 'none',
-            color: !questionActive ? '#555' : buzzed ? '#888' : 'white',
-            fontSize: !questionActive ? '1.1rem' : '1.8rem',
-            fontWeight: '900',
+            color: !questionActive ? '#444' : buzzed ? '#777' : 'white',
+            fontSize: !questionActive ? '1rem' : '1.7rem',
+            fontWeight: '900', letterSpacing: '2px',
             cursor: !questionActive || buzzed ? 'not-allowed' : 'pointer',
-            boxShadow: questionActive && !buzzed
-              ? `0 15px 40px ${teamColor}66`
-              : 'none',
+            boxShadow: questionActive && !buzzed ? `0 14px 36px ${teamColor}55` : 'none',
             transform: `scale(${buzzerScale})`,
             transition: 'transform 0.15s, background 0.3s, box-shadow 0.3s',
-            letterSpacing: '2px',
           }}
         >
-          {!questionActive ? 'انتظر السؤال...' : buzzed ? '✓ ضغطت!' : '⚡ BUZZ!'}
+          {!questionActive ? 'انتظر السؤال...' : buzzed ? '✓ تم الضغط!' : '⚡  BUZZ!'}
         </button>
       </div>
 
       <style>{`
-        @keyframes fadeInDown {
-          from { opacity: 0; transform: translateY(-20px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to   { opacity: 1; }
-        }
+        @keyframes fadeInDown { from { opacity:0; transform:translateY(-18px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
       `}</style>
     </div>
   );

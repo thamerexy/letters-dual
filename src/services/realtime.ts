@@ -1,140 +1,121 @@
 import { supabase } from '../lib/supabase';
 import { useRoomStore } from '../store/roomStore';
-import type { Player, BuzzEvent, Team } from '../store/roomStore';
+import type { PlayerPresence, BuzzEvent, Team, GameBroadcast } from '../store/roomStore';
 
 type RealtimeChannel = ReturnType<typeof supabase.channel>;
 
 let activeChannel: RealtimeChannel | null = null;
+let currentPresence: PlayerPresence | null = null;
 
-export type BroadcastMessage =
-  | { type: 'BUZZ'; payload: BuzzEvent }
-  | { type: 'QUESTION_START'; payload: { question: string; answer: string; letter: string } }
-  | { type: 'QUESTION_CLEAR' }
-  | { type: 'REVEAL_ANSWER'; payload: { team: Team } }
-  | { type: 'GAME_STATE_UPDATE'; payload: object };
+type BroadcastPayload =
+  | { type: 'BUZZ'; data: BuzzEvent }
+  | { type: 'TEAM_ASSIGN'; clientId: string; team: Team }
+  | { type: 'GAME_STATE'; data: GameBroadcast };
 
-export const subscribeToRoom = (roomCode: string, roomId: string): void => {
-  // Unsubscribe from any previous channel
+const syncPresence = (channel: RealtimeChannel) => {
+  const raw = channel.presenceState();
+  const players: PlayerPresence[] = [];
+  for (const presences of Object.values(raw)) {
+    for (const p of (presences as unknown as PlayerPresence[])) {
+      if (!p.isAdmin) players.push(p);
+    }
+  }
+  useRoomStore.getState().setPlayers(players);
+};
+
+/**
+ * Connect to a Supabase Realtime channel for this room.
+ * Uses Presence + Broadcast only — NO database tables needed.
+ */
+export const subscribeToRoom = (roomCode: string, presence: PlayerPresence): Promise<void> => {
   if (activeChannel) {
     supabase.removeChannel(activeChannel);
     activeChannel = null;
   }
+  currentPresence = { ...presence };
 
-  const channel = supabase.channel(`room:${roomCode}`, {
-    config: { broadcast: { self: false } },
-  });
+  return new Promise((resolve, reject) => {
+    const channel = supabase.channel(`game:${roomCode}`, {
+      config: {
+        presence: { key: presence.clientId },
+        broadcast: { self: false },
+      },
+    });
 
-  // Listen for player table changes (new joins, team updates)
-  channel.on(
-    'postgres_changes',
-    {
-      event: '*',
-      schema: 'public',
-      table: 'players',
-      filter: `room_id=eq.${roomId}`,
-    },
-    async () => {
-      // Re-fetch all players when something changes
-      const { data } = await supabase
-        .from('players')
-        .select('*')
-        .eq('room_id', roomId)
-        .order('joined_at', { ascending: true });
+    channel.on('presence', { event: 'sync' }, () => syncPresence(channel));
+    channel.on('presence', { event: 'join' }, () => syncPresence(channel));
+    channel.on('presence', { event: 'leave' }, () => syncPresence(channel));
 
-      if (data) {
-        const store = useRoomStore.getState();
-        const players = data as Player[];
-        store.setPlayers(players);
-
-        // Update myPlayer if it exists
-        if (store.myPlayer) {
-          const updated = players.find(p => p.client_id === store.clientId);
-          if (updated) store.setMyPlayer(updated);
+    channel.on('broadcast', { event: 'GAME' }, ({ payload }: { payload: BroadcastPayload }) => {
+      const store = useRoomStore.getState();
+      if (payload.type === 'BUZZ') {
+        store.addBuzz(payload.data);
+      } else if (payload.type === 'TEAM_ASSIGN') {
+        if (payload.clientId === store.clientId) {
+          store.setMyTeam(payload.team);
+          if (currentPresence) {
+            currentPresence = { ...currentPresence, team: payload.team };
+            channel.track(currentPresence);
+          }
+        }
+      } else if (payload.type === 'GAME_STATE') {
+        if (!store.isAdmin) {
+          store.applyGameBroadcast(payload.data);
         }
       }
-    }
-  );
+    });
 
-  // Listen for room table changes (phase changes, game state updates)
-  channel.on(
-    'postgres_changes',
-    {
-      event: 'UPDATE',
-      schema: 'public',
-      table: 'rooms',
-      filter: `id=eq.${roomId}`,
-    },
-    (payload) => {
-      const store = useRoomStore.getState();
-      const newRoom = payload.new as { phase: string; game_state: Record<string, unknown> };
-      
-      if (newRoom.phase && newRoom.phase !== store.gamePhase) {
-        store.setGamePhase(newRoom.phase as 'lobby' | 'game' | 'finished');
+    let timeoutId: ReturnType<typeof setTimeout>;
+    channel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        clearTimeout(timeoutId);
+        await channel.track(currentPresence!);
+        activeChannel = channel;
+        resolve();
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        clearTimeout(timeoutId);
+        reject(new Error(`Connection error: ${status}`));
       }
-    }
-  );
-
-  // Listen for broadcast messages (buzz, question, reveal)
-  channel.on('broadcast', { event: 'GAME_EVENT' }, ({ payload }: { payload: BroadcastMessage }) => {
-    const store = useRoomStore.getState();
-
-    if (payload.type === 'BUZZ') {
-      store.addBuzz(payload.payload);
-    } else if (payload.type === 'QUESTION_START') {
-      store.setQuestionActive(true, payload.payload);
-    } else if (payload.type === 'QUESTION_CLEAR') {
-      store.setQuestionActive(false);
-    } else if (payload.type === 'REVEAL_ANSWER') {
-      store.setAnswerRevealed(true, payload.payload.team);
-    } else if (payload.type === 'GAME_STATE_UPDATE') {
-      // handled by postgres_changes listener above for non-realtime clients
-    }
+    });
+    timeoutId = setTimeout(() => reject(new Error('Connection timed out')), 10000);
   });
-
-  channel.subscribe();
-  activeChannel = channel;
 };
 
 export const unsubscribeFromRoom = (): void => {
   if (activeChannel) {
     supabase.removeChannel(activeChannel);
     activeChannel = null;
+    currentPresence = null;
   }
 };
 
+/** Admin assigns a player to a team. Optimistic update included. */
+export const broadcastTeamAssign = async (clientId: string, team: Team): Promise<void> => {
+  if (!activeChannel) return;
+  await activeChannel.send({
+    type: 'broadcast', event: 'GAME',
+    payload: { type: 'TEAM_ASSIGN', clientId, team } as BroadcastPayload,
+  });
+  const store = useRoomStore.getState();
+  store.setPlayers(store.players.map(p => p.clientId === clientId ? { ...p, team } : p));
+};
+
+/** Admin broadcasts game state to all players. Also applies locally (self:false). */
+export const broadcastGameState = async (data: GameBroadcast): Promise<void> => {
+  if (!activeChannel) return;
+  await activeChannel.send({
+    type: 'broadcast', event: 'GAME',
+    payload: { type: 'GAME_STATE', data } as BroadcastPayload,
+  });
+  useRoomStore.getState().applyGameBroadcast(data);
+};
+
+/** Player sends a buzz event. Also adds to local queue immediately. */
 export const broadcastBuzz = async (_roomCode: string, buzzData: BuzzEvent): Promise<void> => {
   if (!activeChannel) return;
   await activeChannel.send({
-    type: 'broadcast',
-    event: 'GAME_EVENT',
-    payload: { type: 'BUZZ', payload: buzzData } as BroadcastMessage,
+    type: 'broadcast', event: 'GAME',
+    payload: { type: 'BUZZ', data: buzzData } as BroadcastPayload,
   });
-  // Also add to local store immediately for the player who buzzed
   useRoomStore.getState().addBuzz(buzzData);
-};
-
-export const broadcastQuestionStart = async (
-  question: string,
-  answer: string,
-  letter: string
-): Promise<void> => {
-  if (!activeChannel) return;
-  const payload: BroadcastMessage = { type: 'QUESTION_START', payload: { question, answer, letter } };
-  await activeChannel.send({ type: 'broadcast', event: 'GAME_EVENT', payload });
-  // Update local state for admin
-  useRoomStore.getState().setQuestionActive(true, { question, answer, letter });
-};
-
-export const broadcastQuestionClear = async (): Promise<void> => {
-  if (!activeChannel) return;
-  const payload: BroadcastMessage = { type: 'QUESTION_CLEAR' };
-  await activeChannel.send({ type: 'broadcast', event: 'GAME_EVENT', payload });
-  useRoomStore.getState().setQuestionActive(false);
-};
-
-export const broadcastRevealAnswer = async (team: Team): Promise<void> => {
-  if (!activeChannel) return;
-  const payload: BroadcastMessage = { type: 'REVEAL_ANSWER', payload: { team } };
-  await activeChannel.send({ type: 'broadcast', event: 'GAME_EVENT', payload });
-  useRoomStore.getState().setAnswerRevealed(true, team);
 };

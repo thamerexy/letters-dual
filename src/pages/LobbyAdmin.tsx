@@ -1,33 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Copy, Check, Users, Play } from 'lucide-react';
-import { useRoomStore, assignTeam, startGame } from '../store/roomStore';
-import type { Player, Team } from '../store/roomStore';
-import { supabase } from '../lib/supabase';
+import { useRoomStore } from '../store/roomStore';
+import type { Team } from '../store/roomStore';
+import { broadcastTeamAssign, broadcastGameState } from '../services/realtime';
 
 export const LobbyAdmin: React.FC = () => {
   const navigate = useNavigate();
-  const { roomCode, roomId, players, setPlayers } = useRoomStore();
+  const { roomCode, players, setGamePhase } = useRoomStore();
   const [copied, setCopied] = useState(false);
-
-  // Load initial players and keep them updated
-  useEffect(() => {
-    if (!roomId) return;
-
-    const fetchPlayers = async () => {
-      const { data } = await supabase
-        .from('players')
-        .select('*')
-        .eq('room_id', roomId)
-        .order('joined_at', { ascending: true });
-      if (data) setPlayers(data as Player[]);
-    };
-
-    fetchPlayers();
-    // Refresh every 2s as a fallback in case realtime is slow
-    const interval = setInterval(fetchPlayers, 2000);
-    return () => clearInterval(interval);
-  }, [roomId, setPlayers]);
 
   const handleCopyCode = () => {
     if (roomCode) {
@@ -37,17 +18,16 @@ export const LobbyAdmin: React.FC = () => {
     }
   };
 
-  const handleAssignTeam = async (playerId: string, team: Team) => {
-    await assignTeam(playerId, team);
-    // Optimistic update
-    setPlayers(players.map(p => p.id === playerId ? { ...p, team } : p));
+  const handleAssignTeam = async (clientId: string, team: Team) => {
+    await broadcastTeamAssign(clientId, team);
   };
 
-  const canStart = players.length >= 2 && players.every(p => p.team !== 'none');
+  const canStart = players.length >= 1 && players.every(p => p.team !== 'none');
 
   const handleStartGame = async () => {
-    if (!roomId || !canStart) return;
-    await startGame(roomId);
+    if (!canStart) return;
+    setGamePhase('game');
+    await broadcastGameState({ gamePhase: 'game' });
     navigate('/game-admin');
   };
 
@@ -58,149 +38,119 @@ export const LobbyAdmin: React.FC = () => {
   return (
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      background: 'radial-gradient(circle at 50% 10%, rgb(30,30,40) 0%, rgb(8,8,15) 100%)',
+      background: 'radial-gradient(circle at 50% 10%, rgb(28,30,40) 0%, rgb(8,8,15) 100%)',
       color: 'white', fontFamily: "'Cairo', sans-serif", direction: 'rtl',
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
     }}>
       {/* Header */}
-      <div style={{ padding: '20px 24px 0', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-          <h1 style={{ margin: 0, fontSize: '1.6rem', fontWeight: '800' }}>لوبي المدير</h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Users size={18} color="#aaa" />
-            <span style={{ color: '#aaa', fontSize: '1rem' }}>{players.length} لاعبين</span>
+      <div style={{ padding: '18px 20px 0', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+          <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '800' }}>لوبي المدير</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#666', fontSize: '0.9rem' }}>
+            <Users size={16} />
+            {players.length} لاعب
           </div>
         </div>
 
-        {/* Room Code Box */}
+        {/* Room Code */}
         <div style={{
-          background: 'linear-gradient(135deg, rgba(255,94,98,0.15) 0%, rgba(255,65,108,0.1) 100%)',
-          border: '1px solid rgba(255,94,98,0.4)', borderRadius: '16px',
-          padding: '16px 20px', marginBottom: '16px',
+          background: 'rgba(255,94,98,0.1)', border: '1px solid rgba(255,94,98,0.35)',
+          borderRadius: '14px', padding: '14px 18px', marginBottom: '12px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
           <div>
-            <div style={{ fontSize: '0.85rem', color: '#aaa', marginBottom: '4px' }}>رمز الغرفة — شاركه مع اللاعبين</div>
-            <div style={{ fontSize: '2.8rem', fontWeight: '900', letterSpacing: '10px', color: '#ff6b6b' }}>{roomCode}</div>
+            <div style={{ fontSize: '0.8rem', color: '#888', marginBottom: '2px' }}>رمز الغرفة — شاركه مع اللاعبين</div>
+            <div style={{ fontSize: '2.6rem', fontWeight: '900', letterSpacing: '10px', color: '#ff6b6b' }}>{roomCode}</div>
           </div>
-          <button
-            onClick={handleCopyCode}
-            style={{
-              background: copied ? 'rgba(0,176,155,0.3)' : 'rgba(255,255,255,0.1)',
-              border: '1px solid rgba(255,255,255,0.2)', borderRadius: '12px',
-              color: 'white', padding: '12px', cursor: 'pointer', transition: 'all 0.3s',
-            }}
-          >
-            {copied ? <Check size={22} color="#00b09b" /> : <Copy size={22} />}
+          <button onClick={handleCopyCode} style={{
+            background: copied ? 'rgba(0,176,155,0.25)' : 'rgba(255,255,255,0.08)',
+            border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px',
+            color: 'white', padding: '10px', cursor: 'pointer', transition: 'all 0.25s',
+          }}>
+            {copied ? <Check size={20} color="#00b09b" /> : <Copy size={20} />}
           </button>
         </div>
 
-        {/* Start Game Button */}
-        <button
-          onClick={handleStartGame}
-          disabled={!canStart}
-          style={{
-            width: '100%', padding: '16px',
-            background: canStart
-              ? 'linear-gradient(135deg, #f7971e, #ffd200)'
-              : 'rgba(80,80,80,0.5)',
-            border: 'none', borderRadius: '14px',
-            color: canStart ? '#1a1a1a' : '#666',
-            fontSize: '1.3rem', fontWeight: '900',
-            cursor: canStart ? 'pointer' : 'not-allowed',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-            marginBottom: '16px',
-            boxShadow: canStart ? '0 10px 25px rgba(247,151,30,0.4)' : 'none',
-            transition: 'all 0.3s',
-          }}
-        >
+        {/* Start Button */}
+        <button onClick={handleStartGame} disabled={!canStart} style={{
+          width: '100%', padding: '15px',
+          background: canStart ? 'linear-gradient(135deg, #f7971e, #ffd200)' : 'rgba(60,60,60,0.5)',
+          border: 'none', borderRadius: '14px',
+          color: canStart ? '#1a1a1a' : '#555',
+          fontSize: '1.2rem', fontWeight: '900', cursor: canStart ? 'pointer' : 'not-allowed',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+          marginBottom: '12px',
+          boxShadow: canStart ? '0 8px 22px rgba(247,151,30,0.38)' : 'none',
+          transition: 'all 0.3s',
+        }}>
           <Play size={20} />
-          {canStart ? 'ابدأ اللعبة!' : players.length < 2 ? 'في انتظار لاعبين...' : 'قسّم الفرق أولاً'}
+          {canStart ? 'ابدأ اللعبة!' : players.length === 0 ? 'انتظر انضمام لاعبين...' : 'قسّم الفرق أولاً'}
         </button>
 
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '6px' }}>
+        {/* Team counts */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
           {[
-            { label: 'غير مقسّمين', count: unassigned.length, color: '#888' },
-            { label: 'الفريق الأحمر', count: redTeam.length, color: '#ff416c' },
-            { label: 'الفريق الأخضر', count: greenTeam.length, color: '#00b09b' },
+            { label: 'بدون فريق', count: unassigned.length, color: '#666' },
+            { label: 'الأحمر', count: redTeam.length, color: '#ff416c' },
+            { label: 'الأخضر', count: greenTeam.length, color: '#00b09b' },
           ].map(({ label, count, color }) => (
-            <div key={label} style={{ flex: 1, background: 'rgba(255,255,255,0.05)', borderRadius: '10px', padding: '8px', textAlign: 'center' }}>
-              <div style={{ fontSize: '1.4rem', fontWeight: '900', color }}>{count}</div>
-              <div style={{ fontSize: '0.75rem', color: '#777' }}>{label}</div>
+            <div key={label} style={{ flex: 1, background: 'rgba(255,255,255,0.04)', borderRadius: '10px', padding: '7px', textAlign: 'center' }}>
+              <div style={{ fontSize: '1.3rem', fontWeight: '900', color }}>{count}</div>
+              <div style={{ fontSize: '0.7rem', color: '#666' }}>{label}</div>
             </div>
           ))}
         </div>
       </div>
 
       {/* Player List */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 24px 24px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '4px 20px 20px' }}>
         {players.length === 0 && (
-          <div style={{ textAlign: 'center', color: '#555', fontSize: '1.1rem', marginTop: '40px' }}>
-            <Users size={48} color="#333" style={{ marginBottom: '12px' }} />
-            <div>لم ينضم أي لاعب بعد</div>
-            <div style={{ fontSize: '0.9rem', color: '#444', marginTop: '6px' }}>شارك رمز الغرفة مع اللاعبين</div>
+          <div style={{ textAlign: 'center', color: '#444', marginTop: '36px' }}>
+            <Users size={44} color="#2a2a2a" style={{ marginBottom: '10px' }} />
+            <div style={{ fontSize: '1rem' }}>لم ينضم أي لاعب بعد</div>
+            <div style={{ fontSize: '0.85rem', color: '#333', marginTop: '4px' }}>شارك رمز الغرفة مع اللاعبين</div>
           </div>
         )}
-        {players.map((player) => (
-          <PlayerRow key={player.id} player={player} onAssign={handleAssignTeam} />
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const PlayerRow: React.FC<{ player: Player; onAssign: (id: string, team: Team) => void }> = ({ player, onAssign }) => {
-  const teamColor = player.team === 'team1' ? '#ff416c' : player.team === 'team2' ? '#00b09b' : '#555';
-  const teamLabel = player.team === 'team1' ? 'أحمر' : player.team === 'team2' ? 'أخضر' : 'بدون فريق';
-
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      background: 'rgba(255,255,255,0.05)', borderRadius: '14px',
-      padding: '14px 16px', marginBottom: '10px',
-      border: `1px solid ${player.team !== 'none' ? teamColor + '44' : 'rgba(255,255,255,0.07)'}`,
-      transition: 'all 0.3s',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <div style={{
-          width: '40px', height: '40px', borderRadius: '50%',
-          background: `linear-gradient(135deg, ${teamColor}44, ${teamColor}22)`,
-          border: `2px solid ${teamColor}`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '1rem', fontWeight: '800', color: teamColor,
-          flexShrink: 0,
-        }}>
-          {player.name[0]}
-        </div>
-        <div>
-          <div style={{ fontSize: '1.1rem', fontWeight: '700' }}>{player.name}</div>
-          <div style={{ fontSize: '0.85rem', color: teamColor }}>{teamLabel}</div>
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', gap: '8px' }}>
-        <button
-          onClick={() => onAssign(player.id, 'team1')}
-          style={{
-            padding: '8px 14px', background: player.team === 'team1' ? '#ff416c' : 'rgba(255,65,108,0.15)',
-            border: '1px solid rgba(255,65,108,0.5)', borderRadius: '10px',
-            color: 'white', fontSize: '0.85rem', fontWeight: '700', cursor: 'pointer',
-            transition: 'all 0.2s',
-          }}
-        >
-          أحمر
-        </button>
-        <button
-          onClick={() => onAssign(player.id, 'team2')}
-          style={{
-            padding: '8px 14px', background: player.team === 'team2' ? '#00b09b' : 'rgba(0,176,155,0.15)',
-            border: '1px solid rgba(0,176,155,0.5)', borderRadius: '10px',
-            color: 'white', fontSize: '0.85rem', fontWeight: '700', cursor: 'pointer',
-            transition: 'all 0.2s',
-          }}
-        >
-          أخضر
-        </button>
+        {players.map((player) => {
+          const teamColor = player.team === 'team1' ? '#ff416c' : player.team === 'team2' ? '#00b09b' : '#555';
+          const teamLabel = player.team === 'team1' ? 'أحمر' : player.team === 'team2' ? 'أخضر' : 'بدون فريق';
+          return (
+            <div key={player.clientId} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              background: 'rgba(255,255,255,0.04)', borderRadius: '14px',
+              padding: '12px 14px', marginBottom: '8px',
+              border: `1px solid ${player.team !== 'none' ? teamColor + '40' : 'rgba(255,255,255,0.06)'}`,
+              transition: 'border-color 0.3s',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{
+                  width: '38px', height: '38px', borderRadius: '50%',
+                  background: `${teamColor}28`, border: `2px solid ${teamColor}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '1rem', fontWeight: '800', color: teamColor, flexShrink: 0,
+                }}>{player.name[0]}</div>
+                <div>
+                  <div style={{ fontSize: '1.05rem', fontWeight: '700' }}>{player.name}</div>
+                  <div style={{ fontSize: '0.8rem', color: teamColor }}>{teamLabel}</div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <button onClick={() => handleAssignTeam(player.clientId, 'team1')} style={{
+                  padding: '7px 12px',
+                  background: player.team === 'team1' ? '#ff416c' : 'rgba(255,65,108,0.12)',
+                  border: '1px solid rgba(255,65,108,0.45)', borderRadius: '9px',
+                  color: 'white', fontSize: '0.82rem', fontWeight: '700', cursor: 'pointer', transition: 'all 0.2s',
+                }}>أحمر</button>
+                <button onClick={() => handleAssignTeam(player.clientId, 'team2')} style={{
+                  padding: '7px 12px',
+                  background: player.team === 'team2' ? '#00b09b' : 'rgba(0,176,155,0.12)',
+                  border: '1px solid rgba(0,176,155,0.45)', borderRadius: '9px',
+                  color: 'white', fontSize: '0.82rem', fontWeight: '700', cursor: 'pointer', transition: 'all 0.2s',
+                }}>أخضر</button>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
