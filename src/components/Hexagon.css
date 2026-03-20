@@ -1,0 +1,80 @@
+.board-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  border-radius: 20px;
+  background: rgba(40, 40, 40, 0.4);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  min-height: auto;
+  overflow: visible;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Removed hex-row */
+
+.hexagon-wrapper {
+  position: relative;
+  width: 80px;
+  height: 69.28px;
+  margin: 0;
+  filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.5));
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.3s;
+}
+
+.hexagon-wrapper:hover {
+  transform: scale(1.15);
+  z-index: 10;
+  cursor: pointer;
+  filter: drop-shadow(0px 8px 15px rgba(255, 255, 255, 0.2));
+}
+
+.hexagon {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.4s ease, box-shadow 0.4s ease;
+  position: relative;
+}
+
+.hexagon-inner {
+  font-size: 28px;
+  font-weight: 800;
+  color: #333;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+/* Colors for teams */
+.hexagon.owner-team1 {
+  background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+  color: white;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+}
+.hexagon.owner-team1 .hexagon-inner {
+  color: white;
+  text-shadow: 1px 1px 4px rgba(0,0,0,0.4);
+}
+
+.hexagon.owner-team2 {
+  background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+  color: white;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+}
+.hexagon.owner-team2 .hexagon-inner {
+  color: white;
+  text-shadow: 1px 1px 4px rgba(0,0,0,0.4);
+}
+
+/* Game borders */
+.game-board {
+  position: relative;
+  padding: 0;
+  background: transparent;
+  perspective: 1000px;
+}
