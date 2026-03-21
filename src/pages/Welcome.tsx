@@ -96,8 +96,8 @@ export const Welcome: React.FC = () => {
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      background: 'radial-gradient(circle at 50% 20%, rgb(28, 38, 50) 0%, rgb(8, 8, 15) 100%)',
-      color: 'white', padding: '20px', overflow: 'hidden',
+      background: 'var(--bg-main)',
+      color: 'var(--text-primary)', padding: '20px', overflow: 'hidden',
       fontFamily: "'Cairo', sans-serif", direction: 'rtl',
     }}>
       {/* Logo */}
@@ -125,28 +125,29 @@ export const Welcome: React.FC = () => {
       )}
 
       {(mode === 'select') && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%', maxWidth: '360px', animation: 'fadeInUp 0.8s ease-out' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%', maxWidth: '380px', animation: 'fadeInUp 0.8s ease-out' }}>
           {/* Admin Card */}
           <button
             onClick={handleAdminClick}
             disabled={!isLoaded}
             style={{
-              display: 'flex', alignItems: 'center', gap: '18px', padding: '22px 24px',
-              background: isLoaded ? 'linear-gradient(135deg, rgba(255,94,98,0.18) 0%, rgba(255,65,108,0.12) 100%)' : 'rgba(40,40,40,0.5)',
-              border: isLoaded ? '1px solid rgba(255,94,98,0.45)' : '1px solid #2a2a2a',
-              borderRadius: '18px', color: isLoaded ? 'white' : '#555',
+              display: 'flex', alignItems: 'center', gap: '20px', padding: '24px',
+              background: isLoaded ? 'white' : '#f1f3f5',
+              border: isLoaded ? '1px solid var(--glass-border)' : '1px solid #eee',
+              borderRadius: '24px', color: isLoaded ? 'var(--text-primary)' : '#ccc',
               cursor: isLoaded ? 'pointer' : 'not-allowed', textAlign: 'right',
-              transition: 'all 0.3s', boxShadow: isLoaded ? '0 8px 28px rgba(255,65,108,0.18)' : 'none',
+              transition: 'all 0.3s', boxShadow: isLoaded ? 'var(--shadow-sm)' : 'none',
+              position: 'relative', overflow: 'hidden'
             }}
-            onMouseOver={(e) => { if (!isLoaded) return; e.currentTarget.style.transform = 'translateY(-3px)'; }}
-            onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; }}
+            onMouseOver={(e) => { if (!isLoaded) return; e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = 'var(--shadow-lg)'; }}
+            onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
           >
-            <div style={{ background: 'linear-gradient(135deg, #ff416c, #ff4b2b)', borderRadius: '12px', padding: '12px', flexShrink: 0 }}>
-              <Shield size={26} color="white" />
+            <div style={{ background: 'linear-gradient(135deg, #ff416c, #ff4b2b)', borderRadius: '16px', padding: '14px', flexShrink: 0, boxShadow: '0 8px 16px rgba(255,65,108,0.2)' }}>
+              <Shield size={28} color="white" />
             </div>
             <div>
-              <div style={{ fontSize: '1.35rem', fontWeight: '800', marginBottom: '3px' }}>شاشة المدير</div>
-              <div style={{ fontSize: '0.9rem', color: '#999' }}>أنشئ غرفة جديدة وأدِر المباراة</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: '900', marginBottom: '4px' }}>شاشة المدير</div>
+              <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: '700' }}>أنشئ غرفة جديدة وأدِر المباراة</div>
             </div>
           </button>
 
@@ -155,44 +156,45 @@ export const Welcome: React.FC = () => {
             onClick={() => { setMode('player-join'); setError(null); }}
             disabled={!isLoaded}
             style={{
-              display: 'flex', alignItems: 'center', gap: '18px', padding: '22px 24px',
-              background: isLoaded ? 'linear-gradient(135deg, rgba(0,176,155,0.18) 0%, rgba(150,201,61,0.12) 100%)' : 'rgba(40,40,40,0.5)',
-              border: isLoaded ? '1px solid rgba(0,176,155,0.45)' : '1px solid #2a2a2a',
-              borderRadius: '18px', color: isLoaded ? 'white' : '#555',
+              display: 'flex', alignItems: 'center', gap: '20px', padding: '24px',
+              background: isLoaded ? 'white' : '#f1f3f5',
+              border: isLoaded ? '1px solid var(--glass-border)' : '1px solid #eee',
+              borderRadius: '24px', color: isLoaded ? 'var(--text-primary)' : '#ccc',
               cursor: isLoaded ? 'pointer' : 'not-allowed', textAlign: 'right',
-              transition: 'all 0.3s', boxShadow: isLoaded ? '0 8px 28px rgba(0,176,155,0.18)' : 'none',
+              transition: 'all 0.3s', boxShadow: isLoaded ? 'var(--shadow-sm)' : 'none',
             }}
-            onMouseOver={(e) => { if (!isLoaded) return; e.currentTarget.style.transform = 'translateY(-3px)'; }}
-            onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; }}
+            onMouseOver={(e) => { if (!isLoaded) return; e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = 'var(--shadow-lg)'; }}
+            onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
           >
-            <div style={{ background: 'linear-gradient(135deg, #00b09b, #96c93d)', borderRadius: '12px', padding: '12px', flexShrink: 0 }}>
-              <Users size={26} color="white" />
+            <div style={{ background: 'linear-gradient(135deg, #00b09b, #96c93d)', borderRadius: '16px', padding: '14px', flexShrink: 0, boxShadow: '0 8px 16px rgba(0,176,155,0.2)' }}>
+              <Users size={28} color="white" />
             </div>
             <div>
-              <div style={{ fontSize: '1.35rem', fontWeight: '800', marginBottom: '3px' }}>شاشة اللاعبين</div>
-              <div style={{ fontSize: '0.9rem', color: '#999' }}>انضم إلى غرفة وألعب مع فريقك</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: '900', marginBottom: '4px' }}>شاشة اللاعبين</div>
+              <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: '700' }}>انضم إلى غرفة وألعب مع فريقك</div>
             </div>
           </button>
         </div>
       )}
 
       {mode === 'admin-passcode' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%', maxWidth: '360px', animation: 'fadeInUp 0.4s ease-out' }}>
-          <h2 style={{ textAlign: 'center', fontSize: '1.5rem', margin: '0 0 6px', color: '#ff416c' }}>رمز المدير المطلوب</h2>
+        <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%', maxWidth: '380px', animation: 'fadeInUp 0.4s ease-out', padding: '32px', borderRadius: '32px' }}>
+          <h2 style={{ textAlign: 'center', fontSize: '1.6rem', fontWeight: '950', margin: '0 0 4px', color: 'var(--team1)' }}>رمز المدير</h2>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <label style={{ fontSize: '0.9rem', color: '#888' }}>أدخل رمز تفعيل اللعبة</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <label style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', fontWeight: '800' }}>أدخل رمز تفعيل اللعبة</label>
             <input
               type="password" value={passcode}
               onChange={(e) => setPasscode(e.target.value)}
               placeholder="••••"
               onKeyDown={(e) => e.key === 'Enter' && handleAdminPasscode()}
               style={{
-                padding: '16px 20px', borderRadius: '14px',
-                background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)',
-                color: 'white', fontSize: '1.4rem', fontWeight: '900',
-                textAlign: 'center', letterSpacing: '4px',
+                padding: '18px 20px', borderRadius: '18px',
+                background: '#f8f9fa', border: '1px solid var(--glass-border)',
+                color: 'var(--text-primary)', fontSize: '1.6rem', fontWeight: '900',
+                textAlign: 'center', letterSpacing: '6px',
                 fontFamily: "'Cairo', sans-serif", outline: 'none',
+                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)'
               }}
               autoFocus
             />
@@ -201,10 +203,10 @@ export const Welcome: React.FC = () => {
           <button
             onClick={handleAdminPasscode}
             style={{
-              padding: '16px', background: 'linear-gradient(135deg, #ff416c, #ff4b2b)',
-              border: 'none', borderRadius: '14px', color: 'white',
-              fontSize: '1.25rem', fontWeight: '800', cursor: 'pointer',
-              boxShadow: '0 8px 22px rgba(255,65,108,0.3)', marginTop: '4px',
+              padding: '18px', background: 'linear-gradient(135deg, #1e2030, #14161f)',
+              border: 'none', borderRadius: '18px', color: 'white',
+              fontSize: '1.3rem', fontWeight: '900', cursor: 'pointer',
+              boxShadow: '0 10px 24px rgba(0,0,0,0.15)', marginTop: '8px',
             }}
           >
             تفعيل وإنشاء غرفة ←
@@ -212,8 +214,8 @@ export const Welcome: React.FC = () => {
 
           <button
             onClick={() => { setMode('select'); setError(null); setPasscode(''); }}
-            style={{ background: 'transparent', border: 'none', color: '#666', cursor: 'pointer', fontSize: '1rem', padding: '6px' }}
-          >رجوع</button>
+            style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1rem', fontWeight: '800', padding: '10px' }}
+          >رجوع للرئيسية</button>
         </div>
       )}
 
@@ -227,37 +229,39 @@ export const Welcome: React.FC = () => {
       )}
 
       {mode === 'player-join' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%', maxWidth: '360px', animation: 'fadeInUp 0.4s ease-out' }}>
-          <h2 style={{ textAlign: 'center', fontSize: '1.5rem', margin: '0 0 6px', color: '#00b09b' }}>بيانات الانضمام</h2>
+        <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%', maxWidth: '380px', animation: 'fadeInUp 0.4s ease-out', padding: '32px', borderRadius: '32px' }}>
+          <h2 style={{ textAlign: 'center', fontSize: '1.6rem', fontWeight: '950', margin: '0 0 4px', color: 'var(--team2)' }}>بيانات الانضمام</h2>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <label style={{ fontSize: '0.9rem', color: '#888' }}>رمز الغرفة (4 أحرف)</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <label style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', fontWeight: '800' }}>رمز الغرفة (4 أحرف)</label>
             <input
               type="text" value={roomCode}
               onChange={(e) => setRoomCode(e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4))}
-              placeholder="مثال: ABCD" maxLength={4}
+              placeholder="ABCD" maxLength={4}
               style={{
-                padding: '14px 18px', borderRadius: '14px',
-                background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)',
-                color: 'white', fontSize: '2rem', fontWeight: '900',
+                padding: '16px 20px', borderRadius: '18px',
+                background: '#f8f9fa', border: '1px solid var(--glass-border)',
+                color: 'var(--text-primary)', fontSize: '2rem', fontWeight: '950',
                 textAlign: 'center', letterSpacing: '8px',
                 fontFamily: "'Cairo', sans-serif", outline: 'none',
+                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)'
               }}
             />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <label style={{ fontSize: '0.9rem', color: '#888' }}>اسمك</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <label style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', fontWeight: '800' }}>اسمك بالكامل</label>
             <input
               type="text" value={playerName}
               onChange={(e) => setPlayerName(e.target.value.slice(0, 20))}
-              placeholder="أدخل اسمك" maxLength={20}
+              placeholder="أدخل اسمك هنا..." maxLength={20}
               onKeyDown={(e) => e.key === 'Enter' && handlePlayerJoin()}
               style={{
-                padding: '14px 18px', borderRadius: '14px',
-                background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)',
-                color: 'white', fontSize: '1.25rem', fontWeight: '600',
+                padding: '16px 20px', borderRadius: '18px',
+                background: '#f8f9fa', border: '1px solid var(--glass-border)',
+                color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: '800',
                 textAlign: 'right', fontFamily: "'Cairo', sans-serif", outline: 'none',
+                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)'
               }}
             />
           </div>
@@ -265,10 +269,10 @@ export const Welcome: React.FC = () => {
           <button
             onClick={handlePlayerJoin}
             style={{
-              padding: '16px', background: 'linear-gradient(135deg, #00b09b, #96c93d)',
-              border: 'none', borderRadius: '14px', color: 'white',
-              fontSize: '1.25rem', fontWeight: '800', cursor: 'pointer',
-              boxShadow: '0 8px 22px rgba(0,176,155,0.35)', marginTop: '4px',
+              padding: '18px', background: 'linear-gradient(135deg, #00b09b, #96c93d)',
+              border: 'none', borderRadius: '18px', color: 'white',
+              fontSize: '1.3rem', fontWeight: '900', cursor: 'pointer',
+              boxShadow: '0 10px 24px rgba(0,176,155,0.25)', marginTop: '8px',
             }}
           >
             انضم الآن ←
@@ -276,8 +280,8 @@ export const Welcome: React.FC = () => {
 
           <button
             onClick={() => { setMode('select'); setError(null); setRoomCode(''); setPlayerName(''); }}
-            style={{ background: 'transparent', border: 'none', color: '#666', cursor: 'pointer', fontSize: '1rem', padding: '6px' }}
-          >رجوع</button>
+            style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1rem', fontWeight: '800', padding: '10px' }}
+          >رجوع للرئيسية</button>
         </div>
       )}
 

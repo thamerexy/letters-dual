@@ -27,13 +27,13 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
   buzzQueue = [],
 }) => {
   const [showAnswerText, setShowAnswerText] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(30);
+  const [timeLeft, setTimeLeft] = useState(20);
 
   // Reset state when newly opened
   React.useEffect(() => {
     if (isOpen) {
       setShowAnswerText(false);
-      setTimeLeft(30);
+      setTimeLeft(20);
     }
   }, [isOpen]);
 
@@ -51,59 +51,61 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
   const firstBuzz = buzzQueue[0];
 
   const content = (
-    <div style={{
-      background: 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(245,245,245,0.95) 100%)',
-      padding: 'clamp(12px, 2.5vh, 20px) 20px',
-      borderRadius: '20px',
+    <div className="glass-panel" style={{
+      background: 'white',
+      padding: 'clamp(12px, 2.5vh, 24px) 24px',
+      borderRadius: '24px',
       maxWidth: '92%',
       width: '480px',
-      maxHeight: '85vh',
+      maxHeight: '90vh',
       overflowY: 'auto',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'flex-start',
       textAlign: 'center',
-      color: '#222',
-      boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
-      border: '1px solid rgba(255,255,255,0.5)',
-      animation: 'slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+      color: 'var(--text-primary)',
+      boxShadow: 'var(--shadow-lg)',
+      animation: 'popUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
     }}>
-      <h2 style={{ fontSize: 'clamp(1.4rem, 4.5vh, 2rem)', margin: '0 0 8px', color: '#111' }}>
-        حرف <span style={{ color: '#00b09b' }}>{letter}</span>
-      </h2>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '8px' }}>
+        <div style={{ width: '38px', height: '38px', background: 'var(--team2-light)', border: '1px solid var(--team2)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--team2)', fontSize: '1.2rem', fontWeight: '900' }}>
+          {letter}
+        </div>
+        <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: '800' }}>سؤال الحرف</div>
+      </div>
 
       {/* Buzz notification for admin */}
       {firstBuzz && (
         <div style={{
-          background: firstBuzz.team === 'team1' ? 'rgba(255,65,108,0.12)' : 'rgba(0,176,155,0.12)',
-          border: `1px solid ${firstBuzz.team === 'team1' ? 'rgba(255,65,108,0.4)' : 'rgba(0,176,155,0.4)'}`,
-          borderRadius: '12px', padding: '8px 14px',
-          marginBottom: 'clamp(5px, 1.5vh, 10px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+          background: firstBuzz.team === 'team1' ? 'var(--team1-light)' : 'var(--team2-light)',
+          border: `1px solid ${firstBuzz.team === 'team1' ? '#ff416c66' : '#00b09b66'}`,
+          borderRadius: '14px', padding: '10px 16px',
+          marginBottom: 'clamp(5px, 1.5vh, 12px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
           animation: 'fadeIn 0.3s ease-out',
         }}>
-          <Zap size={16} color={firstBuzz.team === 'team1' ? '#ff416c' : '#00b09b'} />
+          <Zap size={18} fill={firstBuzz.team === 'team1' ? '#ff416c' : '#00b09b'} color={firstBuzz.team === 'team1' ? '#ff416c' : '#00b09b'} />
           <span style={{
             fontFamily: "'Cairo', sans-serif",
-            fontWeight: '800', fontSize: 'clamp(0.8rem, 2vh, 1rem)',
-            color: firstBuzz.team === 'team1' ? '#cc2244' : '#007a6a',
+            fontWeight: '900', fontSize: 'clamp(0.9rem, 2vh, 1.1rem)',
+            color: firstBuzz.team === 'team1' ? '#ff416c' : '#00b09b',
           }}>
-            ⚡ {firstBuzz.playerName} ضغط أولاً!
+            {firstBuzz.playerName} ضغط أولاً!
           </span>
         </div>
       )}
 
       {/* Timer Bar */}
       {!showAnswerText && (
-        <div style={{ padding: '0 10px', marginBottom: 'clamp(5px, 1.5vh, 10px)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: "'Cairo', sans-serif", fontSize: 'clamp(0.8rem, 2.5vh, 1rem)', fontWeight: 'bold', color: timeLeft <= 5 ? '#ff416c' : '#555', transition: 'color 0.3s' }}>
+        <div style={{ padding: '0 5px', marginBottom: 'clamp(5px, 1.5vh, 12px)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: "'Cairo', sans-serif", fontSize: '0.9rem', fontWeight: '900', color: timeLeft <= 5 ? '#ff416c' : 'var(--text-secondary)', transition: 'color 0.3s' }}>
             <span>{timeLeft}s</span>
-            <span>الوقت المتبقي</span>
+            <span>الزمن المتبقي</span>
           </div>
-          <div style={{ width: '100%', height: '8px', background: '#e0e0e0', borderRadius: '4px', overflow: 'hidden', marginTop: '5px' }}>
+          <div style={{ width: '100%', height: '8px', background: '#f1f3f5', borderRadius: '10px', overflow: 'hidden', marginTop: '5px', border: '1px solid rgba(0,0,0,0.03)' }}>
             <div style={{
               height: '100%',
-              width: `${(timeLeft / 30) * 100}%`,
+              width: `${(timeLeft / 20) * 100}%`,
               background: timeLeft <= 5 ? 'linear-gradient(90deg, #ff416c, #ff4b2b)' : 'linear-gradient(90deg, #00b09b, #96c93d)',
               transition: 'width 1s linear, background 0.3s ease'
             }} />
@@ -111,7 +113,7 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
         </div>
       )}
 
-      <p style={{ fontSize: 'clamp(1rem, 4vh, 1.4rem)', fontWeight: '800', margin: '10px 0 20px', color: '#333' }}>
+      <p style={{ fontSize: 'clamp(1rem, 4vh, 1.35rem)', fontWeight: '800', margin: '12px 0 24px', color: 'var(--text-primary)', lineHeight: 1.5 }}>
         {question}
       </p>
 
@@ -119,51 +121,59 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
         <button
           onClick={() => setShowAnswerText(true)}
           style={{
-            padding: 'clamp(8px, 2.5vh, 15px) clamp(20px, 5vw, 40px)',
-            background: 'linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%)',
-            color: 'white', border: 'none', borderRadius: '12px',
-            cursor: 'pointer', fontSize: 'clamp(1rem, 3.5vh, 1.3rem)', fontWeight: 'bold',
-            boxShadow: '0 10px 20px -10px rgba(33, 147, 176, 0.8)',
-            transition: 'transform 0.2s', margin: '0 auto',
+            padding: '14px 40px',
+            background: 'linear-gradient(135deg, #1e2030, #14161f)',
+            color: 'white', border: 'none', borderRadius: '16px',
+            cursor: 'pointer', fontSize: '1.1rem', fontWeight: '900',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+            transition: 'all 0.2s', margin: '0 auto',
+            minWidth: '200px'
           }}
-          onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-          onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
         >
           إظهار الجواب
         </button>
       ) : (
         <div style={{ animation: 'fadeIn 0.5s ease-out' }}>
           {showAnswer && (
-            <div style={{ background: 'rgba(0,0,0,0.05)', padding: 'clamp(10px, 3vh, 20px)', borderRadius: '12px', margin: 'clamp(5px, 2vh, 15px) 0', border: '1px solid rgba(0,0,0,0.1)' }}>
-              <h3 style={{ color: '#222', margin: 0, fontSize: 'clamp(1.1rem, 4vh, 1.4rem)' }}>الجواب: {answer}</h3>
+            <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '16px', margin: '8px 0 20px', border: '1px solid var(--glass-border)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: '800', marginBottom: '4px' }}>الجواب الصحيح</div>
+              <div style={{ color: '#111', margin: 0, fontSize: '1.4rem', fontWeight: '950' }}>{answer}</div>
             </div>
           )}
 
-          <p style={{ marginTop: 'clamp(10px, 3vh, 25px)', marginBottom: 'clamp(5px, 2vh, 15px)', fontSize: 'clamp(1rem, 3.5vh, 1.3rem)', fontWeight: '800', color: '#222' }}>
+          <p style={{ marginBottom: '12px', fontSize: '1rem', fontWeight: '800', color: 'var(--text-secondary)' }}>
             من الذي أجاب إجابة صحيحة؟
           </p>
 
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 'clamp(10px, 3vw, 20px)', margin: 'clamp(5px, 2vh, 20px) 0', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', margin: '15px 0', flexWrap: 'wrap' }}>
             <button
               onClick={() => onAnswerComplete('team1')}
-              style={{ flex: 1, padding: 'clamp(10px, 3vh, 15px) 10px', background: 'linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%)', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer', fontSize: 'clamp(0.9rem, 3vh, 1.2rem)', fontWeight: 'bold', boxShadow: '0 8px 15px -5px rgba(255, 65, 108, 0.6)' }}
+              style={{ flex: 1, padding: '16px 10px', background: 'linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%)', color: 'white', border: 'none', borderRadius: '16px', cursor: 'pointer', fontSize: '1.1rem', fontWeight: '900', boxShadow: '0 8px 20px rgba(255, 65, 108, 0.25)', transition: 'all 0.2s' }}
+              onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+              onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
             >
               الفريق الأحمر
             </button>
             <button
               onClick={() => onAnswerComplete('team2')}
-              style={{ flex: 1, padding: 'clamp(10px, 3vh, 15px) 10px', background: 'linear-gradient(135deg, #00b09b 0%, #96c93d 100%)', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer', fontSize: 'clamp(0.9rem, 3vh, 1.2rem)', fontWeight: 'bold', boxShadow: '0 8px 15px -5px rgba(0, 176, 155, 0.6)' }}
+              style={{ flex: 1, padding: '16px 10px', background: 'linear-gradient(135deg, #00b09b 0%, #96c93d 100%)', color: 'white', border: 'none', borderRadius: '16px', cursor: 'pointer', fontSize: '1.1rem', fontWeight: '900', boxShadow: '0 8px 20px rgba(0, 176, 155, 0.25)', transition: 'all 0.2s' }}
+              onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+              onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
             >
               الفريق الأخضر
             </button>
           </div>
 
-          <div style={{ marginTop: 'clamp(5px, 1.5vh, 15px)' }}>
+          <div style={{ marginTop: '10px' }}>
             <button
               onClick={() => onAnswerComplete(null)}
-              style={{ padding: 'clamp(8px, 2.5vh, 12px) 20px', background: '#e0e0e0', color: '#555', border: 'none', borderRadius: '12px', cursor: 'pointer', fontSize: 'clamp(0.9rem, 3vh, 1.1rem)', fontWeight: '600', width: '100%' }}
+              style={{ padding: '12px 20px', background: 'rgba(0,0,0,0.04)', color: '#888', border: '1px solid var(--glass-border)', borderRadius: '14px', cursor: 'pointer', fontSize: '1rem', fontWeight: '700', width: '100%', transition: 'all 0.2s' }}
+              onMouseOver={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.06)'}
+              onMouseOut={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.04)'}
             >
-              لم يجب أحد بصحيح (تخطي)
+              🎉 تخطي / لم يجب أحد
             </button>
           </div>
         </div>

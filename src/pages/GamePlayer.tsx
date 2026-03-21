@@ -5,6 +5,7 @@ import { broadcastBuzz } from '../services/realtime';
 import { useAudio } from '../hooks/useAudio';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { Zap, Sun, Moon } from 'lucide-react';
+import { Hexagon } from '../components/Hexagon';
 
 export const GamePlayer: React.FC = () => {
   const navigate = useNavigate();
@@ -24,6 +25,7 @@ export const GamePlayer: React.FC = () => {
   const [buzzerScale, setBuzzerScale] = useState(1);
   const [isLandscape, setIsLandscape] = useState(false);
   const [hexSize, setHexSize] = useState(60);
+  const [timeLeft, setTimeLeft] = useState(20);
   const buzzedRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -65,7 +67,19 @@ export const GamePlayer: React.FC = () => {
   useEffect(() => {
     setBuzzed(false);
     buzzedRef.current = false;
-  }, [questionActive, currentQuestion]);
+    if (questionActive) {
+      setTimeLeft(20);
+    }
+  }, [questionActive]);
+
+  // Player-side Timer logic
+  useEffect(() => {
+    if (!questionActive || buzzed || timeLeft <= 0) return;
+    const timer = setInterval(() => {
+      setTimeLeft(prev => prev - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [questionActive, buzzed, timeLeft]);
 
   useEffect(() => {
     if (gamePhase === 'finished' || gamePhase === 'lobby') {
@@ -99,52 +113,24 @@ export const GamePlayer: React.FC = () => {
   const borderThick = Math.max(16, hexSize * 0.28);
 
   const BoardSection = (
-    <div style={{ position: 'relative', flexShrink: 0 }}>
-      <div style={{ 
-        position: 'relative', width: boardW + borderThick * 2, height: boardH + borderThick * 2, 
-        borderRadius: '16px', overflow: 'hidden', 
-        boxShadow: '0 15px 40px rgba(0,0,0,0.8)',
-        border: '1px solid rgba(255,255,255,0.08)' 
+    <div style={{ position: 'relative', flexShrink: 0, '--hex-size': `${hexSize}px` } as React.CSSProperties}>
+      <div className="game-board" style={{ 
+        width: boardW, height: boardH, position: 'relative'
       }}>
-        <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: borderThick, background: 'linear-gradient(to bottom, #ff416c, #ff4b2b)', zIndex: 10 }} />
-        <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: borderThick, background: 'linear-gradient(to bottom, #ff416c, #ff4b2b)', zIndex: 10 }} />
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: borderThick, background: 'linear-gradient(to right, #00b09b, #96c93d)', zIndex: 10 }} />
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: borderThick, background: 'linear-gradient(to right, #00b09b, #96c93d)', zIndex: 10 }} />
-        
-        <div style={{ position: 'absolute', inset: 0, background: 'rgba(10,12,20,1)', zIndex: 1 }}>
-          <div style={{ position: 'absolute', left: borderThick, top: borderThick, width: boardW, height: boardH }}>
-          {syncedBoard.map(hex => {
-            const isTeam1 = hex.owner === 'team1';
-            const isTeam2 = hex.owner === 'team2';
-            const bg = isTeam1 
-              ? 'linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%)' 
-              : isTeam2 
-              ? 'linear-gradient(135deg, #00b09b 0%, #96c93d 100%)' 
-              : 'linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%)';
-            
-            return (
-              <div key={hex.id} style={{
-                position: 'absolute', left: hex.colIndex * (hexSize * 0.75), top: hex.row * hexH,
-                width: hexSize, height: hexH,
-                clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
-                background: bg,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: isTeam1 || isTeam2 ? 'inset 0 0 12px rgba(0,0,0,0.2)' : '0 2px 4px rgba(0,0,0,0.1)',
-                transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                zIndex: isTeam1 || isTeam2 ? 10 : 1,
-                transform: isTeam1 || isTeam2 ? 'scale(1.02)' : 'scale(1)',
-                filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.2))',
-              }}>
-                <span style={{ 
-                  fontSize: `${hexSize * 0.38}px`, fontWeight: '800', 
-                  color: isTeam1 || isTeam2 ? 'white' : '#333',
-                  textShadow: isTeam1 || isTeam2 ? '1px 1px 2px rgba(0,0,0,0.4)' : '1px 1px 1px rgba(255,255,255,0.8)',
-                  fontFamily: "'Cairo', sans-serif"
-                }}>{hex.letter}</span>
-              </div>
-            );
-          })}
-          </div>
+        {/* Background borders - Proportioned to match Board.tsx */}
+        <div style={{ position: 'absolute', top: -borderThick, left: -borderThick, right: -borderThick, bottom: -borderThick, zIndex: 0, borderRadius: '24px', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
+          <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: hexSize * 0.44, background: 'linear-gradient(to bottom, #ff416c, #ff4b2b)', boxShadow: '4px 0 10px rgba(255,65,108,0.2)' }} />
+          <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: hexSize * 0.44, background: 'linear-gradient(to bottom, #ff416c, #ff4b2b)', boxShadow: '-4px 0 10px rgba(255,65,108,0.2)' }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: hexSize * 0.75, background: 'linear-gradient(to right, #00b09b, #96c93d)', boxShadow: '0 4px 10px rgba(0,176,155,0.2)' }} />
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: hexSize * 0.75, background: 'linear-gradient(to right, #00b09b, #96c93d)', boxShadow: '0 -4px 10px rgba(0,176,155,0.2)' }} />
+        </div>
+
+        <div className="hex-grid" style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
+          {syncedBoard.map(hex => (
+            <div key={hex.id} style={{ position: 'absolute', left: hex.colIndex * (hexSize * 0.75), top: hex.row * hexH }}>
+              <Hexagon letter={hex.letter} owner={hex.owner as any} />
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -155,14 +141,14 @@ export const GamePlayer: React.FC = () => {
       onClick={handleBuzz}
       disabled={!questionActive || buzzed}
       style={{
-        width: '100%', height: isLandscape ? '70px' : '80px', borderRadius: '20px',
-        background: !questionActive ? 'rgba(50,50,60,0.5)' : buzzed
-          ? 'linear-gradient(135deg, #333, #222)'
+        width: '100%', height: isLandscape ? '70px' : '80px', borderRadius: '24px',
+        background: !questionActive ? '#f1f3f5' : buzzed
+          ? 'linear-gradient(135deg, #ddd, #eee)'
           : `linear-gradient(135deg, ${teamColor}, ${team === 'team1' ? '#ff4b2b' : '#96c93d'})`,
-        border: questionActive && !buzzed ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.06)',
-        color: !questionActive ? '#444' : buzzed ? '#666' : 'white',
+        border: '1px solid var(--glass-border)',
+        color: !questionActive ? '#ccc' : buzzed ? '#999' : 'white',
         fontSize: '1.8rem', fontWeight: '950', cursor: buzzed ? 'default' : 'pointer',
-        boxShadow: questionActive && !buzzed ? `0 12px 35px ${teamColor}66` : 'none',
+        boxShadow: questionActive && !buzzed ? `0 12px 30px ${teamColor}44` : 'none',
         transform: `scale(${buzzerScale})`,
         transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
         flexShrink: 0,
@@ -175,14 +161,14 @@ export const GamePlayer: React.FC = () => {
   return (
     <div ref={containerRef} style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      background: `radial-gradient(circle at 50% 0%, ${teamColor}12 0%, rgb(8,8,14) 75%)`,
-      color: 'white', fontFamily: "'Cairo', sans-serif", direction: 'rtl',
+      background: 'var(--bg-main)',
+      color: 'var(--text-primary)', fontFamily: "'Cairo', sans-serif", direction: 'rtl',
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
     }}>
       {/* ── Fixed Header ── */}
-      <div style={{
+      <div className="glass-panel" style={{
         padding: '8px 16px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(12px)', zIndex: 100,
+        borderBottom: '1px solid var(--glass-border)', zIndex: 100,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: `${teamColor}22`, border: `2px solid ${teamColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', fontWeight: '900', color: teamColor }}>
@@ -194,11 +180,11 @@ export const GamePlayer: React.FC = () => {
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button onClick={toggleWakeLock} style={{ background: wakeLockActive ? 'rgba(255,180,0,0.15)' : 'rgba(255,255,255,0.05)', border: `1px solid ${wakeLockActive ? 'rgba(255,180,0,0.3)' : 'rgba(255,255,255,0.1)'}`, borderRadius: '8px', padding: '4px 10px', color: wakeLockActive ? '#ffb400' : '#555', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.65rem' }}>
+          <button onClick={toggleWakeLock} style={{ background: wakeLockActive ? 'rgba(255,180,0,0.1)' : 'white', border: `1px solid ${wakeLockActive ? '#ffb400' : 'var(--glass-border)'}`, borderRadius: '8px', padding: '4px 10px', color: wakeLockActive ? '#ffb400' : '#888', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.65rem', boxShadow: 'var(--shadow-sm)' }}>
             {wakeLockActive ? <Sun size={12} fill="currentColor" /> : <Moon size={12} />}
             <span>Stay Awake</span>
           </button>
-          <div style={{ background: 'rgba(255,107,107,0.1)', border: '1px solid rgba(255,107,107,0.25)', borderRadius: '8px', padding: '2px 10px', textAlign: 'center' }}>
+          <div style={{ background: 'white', border: '1px solid #ff6b6b44', borderRadius: '8px', padding: '2px 10px', textAlign: 'center', boxShadow: 'var(--shadow-sm)' }}>
             <div style={{ fontSize: '0.45rem', color: '#ff6b6b', fontWeight: '800' }}>ROOM</div>
             <div style={{ fontSize: '1rem', fontWeight: '950', letterSpacing: '3px', color: '#ff6b6b', lineHeight: 1 }}>{roomCode}</div>
           </div>
@@ -223,7 +209,7 @@ export const GamePlayer: React.FC = () => {
             ))}
           </div>
           
-          <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', padding: '8px' }}>
+          <div className="glass-panel" style={{ textAlign: 'center', borderRadius: '12px', padding: '8px' }}>
             <div style={{ color: syncedTurn === 'team1' ? '#ff416c' : '#00b09b', fontWeight: '900', fontSize: '1rem' }}>
               {syncedTurn === 'team1' ? 'دور الفريق الأحمر' : 'دور الفريق الأخضر'}
             </div>
@@ -237,57 +223,68 @@ export const GamePlayer: React.FC = () => {
       {questionActive && currentQuestion && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)',
+          background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(12px)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           padding: '15px', zIndex: 1000, animation: 'fadeIn 0.2s'
         }}>
-          <div style={{
-            background: 'linear-gradient(135deg, #1e2030, #14161f)',
-            border: '1px solid rgba(255,255,255,0.12)', borderRadius: '24px',
-            padding: '20px', width: '100%', maxWidth: '440px', textAlign: 'center',
-            boxShadow: '0 25px 60px rgba(0,0,0,0.6)', animation: 'popUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+          <div className="glass-panel" style={{
+            background: 'white', borderRadius: '32px',
+            padding: '24px', width: '100%', maxWidth: '440px', textAlign: 'center',
+            boxShadow: 'var(--shadow-lg)', animation: 'popUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '12px' }}>
-              <div style={{ width: '36px', height: '36px', background: 'rgba(255,210,0,0.1)', border: '1px solid #ffd200', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffd200', fontSize: '1.2rem', fontWeight: '900' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '8px' }}>
+              <div style={{ width: '38px', height: '38px', background: 'var(--team2-light)', border: '1px solid var(--team2)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--team2)', fontSize: '1.2rem', fontWeight: '900' }}>
                 {currentQuestion.letter}
               </div>
-              <div style={{ color: '#888', fontSize: '0.8rem', fontWeight: '700' }}>سؤال الحرف</div>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: '800' }}>سؤال الحرف</div>
             </div>
+
+            {/* Timer for Player */}
+            {!buzzed && !answerRevealed && (
+              <div style={{ width: '100%', height: '6px', background: '#f1f3f5', borderRadius: '10px', overflow: 'hidden', margin: '10px 0 20px', border: '1px solid rgba(0,0,0,0.03)' }}>
+                <div style={{
+                  height: '100%',
+                  width: `${(timeLeft / 20) * 100}%`,
+                  background: timeLeft <= 5 ? 'var(--team1)' : 'var(--team2)',
+                  transition: 'width 1s linear'
+                }} />
+              </div>
+            )}
             
-            <div style={{ maxHeight: '35vh', overflowY: 'auto', marginBottom: '20px', padding: '0 5px' }}>
-              <p style={{ fontSize: '1.2rem', fontWeight: '800', color: 'white', lineHeight: 1.5, margin: 0 }}>
+            <div style={{ maxHeight: '35vh', overflowY: 'auto', marginBottom: '25px', padding: '0 5px' }}>
+              <p style={{ fontSize: '1.3rem', fontWeight: '900', color: 'var(--text-primary)', lineHeight: 1.5, margin: 0 }}>
                 {currentQuestion.question}
               </p>
             </div>
 
             {/* In-Modal Buzz Status */}
             {firstBuzz ? (
-              <div style={{ marginBottom: '15px', animation: 'fadeIn 0.3s' }}>
+              <div style={{ marginBottom: '20px', animation: 'fadeIn 0.3s' }}>
                 <div style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '6px',
-                  background: firstBuzz.team === 'team1' ? 'rgba(255,65,108,0.2)' : 'rgba(0,176,155,0.2)',
-                  border: `1px solid ${firstBuzz.team === 'team1' ? 'rgba(255,65,108,0.4)' : 'rgba(0,176,155,0.4)'}`,
-                  borderRadius: '12px', padding: '8px 18px',
-                  color: firstBuzz.team === 'team1' ? '#ff8585' : '#00ffda',
-                  fontSize: '0.95rem', fontWeight: '900',
+                  display: 'inline-flex', alignItems: 'center', gap: '8px',
+                  background: firstBuzz.team === 'team1' ? 'var(--team1-light)' : 'var(--team2-light)',
+                  border: `1px solid ${firstBuzz.team === 'team1' ? '#ff416c66' : '#00b09b66'}`,
+                  borderRadius: '16px', padding: '10px 20px',
+                  color: firstBuzz.team === 'team1' ? '#ff416c' : '#00b09b',
+                  fontSize: '1rem', fontWeight: '900',
                 }}>
-                  <Zap size={16} fill="currentColor" />
-                  {firstBuzz.team === 'team1' ? 'الفريق الأحمر هو الذي ضغط أولاً!' : 'الفريق الأخضر هو الذي ضغط أولاً!'}
+                  <Zap size={18} fill="currentColor" />
+                  {firstBuzz.playerName} ضغط أولاً!
                 </div>
               </div>
             ) : isSyncing ? (
-              <div style={{ marginBottom: '15px', color: '#ffb400', fontSize: '0.85rem', fontWeight: '700', animation: 'pulse 1s infinite' }}>جاري المزامنة...</div>
+              <div style={{ marginBottom: '20px', color: '#ffb400', fontSize: '0.9rem', fontWeight: '900', animation: 'pulse 1s infinite' }}>جاري المزامنة...</div>
             ) : null}
 
             {!answerRevealed ? (
               SharedBuzzButton
             ) : (
-              <div style={{ background: 'rgba(247,151,30,0.12)', border: '1px solid rgba(247,151,30,0.3)', borderRadius: '16px', padding: '12px', animation: 'fadeIn 0.5s' }}>
-                <div style={{ fontSize: '0.7rem', color: '#f7971e', fontWeight: '800', marginBottom: '2px' }}>الجواب</div>
-                <div style={{ fontSize: '1.3rem', fontWeight: '950', color: '#ffd200' }}>{revealedAnswer}</div>
+              <div style={{ background: '#f8f9fa', border: '1px solid var(--glass-border)', borderRadius: '20px', padding: '16px', animation: 'fadeIn 0.5s' }}>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '800', marginBottom: '4px' }}>الجواب</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: '950', color: '#111' }}>{revealedAnswer}</div>
                 {awardedTeam && awardedTeam !== 'none' && (
-                  <div style={{ marginTop: '8px', fontSize: '0.9rem', color: awardedTeam === 'team1' ? '#ff6b6b' : '#00d4b4', fontWeight: '900', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
-                    <Zap size={14} /> {awardedTeam === 'team1' ? 'نقطة للأحمر!' : 'نقطة للأخضر!'}
+                  <div style={{ marginTop: '10px', fontSize: '1rem', color: awardedTeam === 'team1' ? '#ff416c' : '#00b09b', fontWeight: '900', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                    <Zap size={16} fill="currentColor" /> {awardedTeam === 'team1' ? 'نقطة للأحمر!' : 'نقطة للأخضر!'}
                   </div>
                 )}
               </div>

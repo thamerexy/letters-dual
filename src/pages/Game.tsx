@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Board } from '../components/Board';
 import { useNavigate } from 'react-router-dom';
-import { RotateCcw, Home, Undo2, Zap, Users, Sun, Moon, Bell } from 'lucide-react';
+import { 
+  RotateCcw, Home, Undo2, Zap, Users, Sun, Moon, Bell 
+} from 'lucide-react';
 import { useGameStore } from '../store/gameStore';
 import type { Team } from '../store/gameStore';
 import { createPortal } from 'react-dom';
@@ -10,6 +12,7 @@ import { useAudio } from '../hooks/useAudio';
 import { useRoomStore } from '../store/roomStore';
 import { broadcastGameState, broadcastBuzz as _broadcastBuzz } from '../services/realtime';
 import { useWakeLock } from '../hooks/useWakeLock';
+import confetti from 'canvas-confetti';
 
 // suppress unused import lint (broadcastBuzz kept for reference)
 void _broadcastBuzz;
@@ -115,6 +118,15 @@ export const Game: React.FC = () => {
     if (activeHexId && claimedBy && claimedBy !== 'none') {
       claimHex(activeHexId, claimedBy);
       playCorrect();
+      
+      // Celebrate with confetti
+      const color = claimedBy === 'team1' ? '#ff416c' : '#00b09b';
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: [color, '#ffffff']
+      });
     } else {
       nextTurn();
       playWrong();
@@ -127,29 +139,28 @@ export const Game: React.FC = () => {
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'radial-gradient(circle at 10% 20%, rgb(30,30,30) 0%, rgb(15,15,15) 100%)',
+      background: 'var(--bg-main)',
       overflow: 'hidden',
     }}>
       {/* ── Fixed Header (Fixes Overlap) ── */}
-      <div style={{
+      <div className="glass-panel" style={{
         position: 'absolute', top: 0, left: 0, right: 0, 
         minHeight: '64px', height: isLandscape ? '64px' : 'auto',
         padding: isLandscape ? '0 20px' : '10px 15px', zIndex: 1000,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         flexWrap: 'wrap', gap: '10px',
-        background: 'rgba(15,15,15,0.95)', backdropFilter: 'blur(15px)',
-        borderBottom: '1px solid rgba(255,255,255,0.1)',
+        borderBottom: '1px solid var(--glass-border)',
         direction: 'rtl', fontFamily: "'Cairo', sans-serif"
       }}>
         {/* Left: Players Button */}
         <button onClick={() => setShowPlayerPanel(true)} style={{ 
-          background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', 
-          borderRadius: '10px', padding: '8px 16px', color: 'white', cursor: 'pointer', 
+          background: 'white', border: '1px solid var(--glass-border)', 
+          borderRadius: '10px', padding: '8px 16px', color: 'var(--text-primary)', cursor: 'pointer', 
           display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1rem', fontWeight: '800',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.2)' 
+          boxShadow: 'var(--shadow-sm)' 
         }}>
           <Users size={20} />
-          اللاعبون <span style={{ background: 'rgba(255,255,255,0.15)', padding: '1px 8px', borderRadius: '5px', fontSize: '0.85rem', marginRight: '4px' }}>{players.length}</span>
+          اللاعبون <span style={{ background: 'rgba(0,0,0,0.05)', padding: '1px 8px', borderRadius: '5px', fontSize: '0.85rem', marginRight: '4px' }}>{players.length}</span>
         </button>
 
         {/* Right: Badges */}
@@ -168,7 +179,7 @@ export const Game: React.FC = () => {
             <span>Stay Awake</span>
           </button>
 
-          <div style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,107,107,0.4)', borderRadius: '12px', padding: '4px 16px', textAlign: 'center', boxShadow: 'inset 0 0 10px rgba(255,65,108,0.1)' }}>
+          <div style={{ background: 'white', border: '1px solid #ff6b6b44', borderRadius: '12px', padding: '4px 16px', textAlign: 'center', boxShadow: '0 4px 10px rgba(255,65,108,0.1)' }}>
             <div style={{ fontSize: '0.55rem', color: '#ff6b6b', letterSpacing: '1px', fontWeight: '800' }}>ROOM</div>
             <div style={{ fontSize: '1.3rem', fontWeight: '950', letterSpacing: '5px', color: '#ff6b6b', lineHeight: 1.1 }}>{roomCode}</div>
           </div>
@@ -230,24 +241,24 @@ export const Game: React.FC = () => {
           )}
 
           {/* Turn */}
-          <div style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '15px', padding: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', fontFamily: "'Cairo', sans-serif" }}>
-            <span style={{ color: '#ccc', fontSize: '1rem', marginBottom: '2px' }}>دور من لاختيار الحرف؟</span>
+          <div className="glass-panel" style={{ width: '100%', borderRadius: '15px', padding: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', fontFamily: "'Cairo', sans-serif" }}>
+            <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '2px' }}>دور من لاختيار الحرف؟</span>
             <span style={{ color: currentTurn === 'team1' ? '#ff416c' : '#00b09b', fontSize: '1.4rem', fontWeight: 'bold' }}>
               {currentTurn === 'team1' ? 'دور الفريق الأحمر' : 'دور الفريق الأخضر'}
             </span>
           </div>
 
           {/* Scoreboard (Smaller) */}
-          <div style={{ display: 'flex', fontFamily: "'Cairo', sans-serif", width: '100%', height: '64px', borderRadius: '15px', overflow: 'hidden', boxShadow: '0 10px 20px rgba(0,0,0,0.3)', position: 'relative' }}>
+          <div style={{ display: 'flex', fontFamily: "'Cairo', sans-serif", width: '100%', height: '64px', borderRadius: '15px', overflow: 'hidden', boxShadow: 'var(--shadow-lg)', position: 'relative', border: '1px solid var(--glass-border)' }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10 }}>
-              <span style={{ background: '#333', padding: '1px 8px', borderRadius: '0 0 8px 8px', fontSize: '0.7rem', border: '1px solid #555', borderTop: 'none', color: 'white' }}>المطلوب {requiredRoundsToWin}</span>
+              <span style={{ background: '#f8f9fa', padding: '1px 8px', borderRadius: '0 0 8px 8px', fontSize: '0.7rem', border: '1px solid var(--glass-border)', borderTop: 'none', color: '#666' }}>المطلوب {requiredRoundsToWin}</span>
             </div>
-            <div style={{ flex: 1, background: '#ff3333', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>الفريق الأحمر</span>
+            <div style={{ flex: 1, background: 'linear-gradient(135deg, #ff416c, #ff4b2b)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>أحمر</span>
               <span style={{ fontSize: '1.5rem', fontWeight: '900' }}>{team1RoundsWon}</span>
             </div>
-            <div style={{ flex: 1, background: '#00cc66', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>الفريق الأخضر</span>
+            <div style={{ flex: 1, background: 'linear-gradient(135deg, #00b09b, #96c93d)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>أخضر</span>
               <span style={{ fontSize: '1.5rem', fontWeight: '900' }}>{team2RoundsWon}</span>
             </div>
           </div>
@@ -261,9 +272,10 @@ export const Game: React.FC = () => {
             ].map(({ icon, label, onClick, disabled }) => (
               <button key={label} onClick={onClick} disabled={!!disabled} style={{
                 flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                padding: '10px 8px', background: disabled ? '#444' : 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.05)',
-                borderRadius: '15px', color: disabled ? '#666' : 'white', fontSize: '0.9rem',
-                fontWeight: 'bold', cursor: disabled ? 'not-allowed' : 'pointer', transition: 'all 0.2s'
+                padding: '10px 8px', background: disabled ? '#f1f3f5' : 'white', border: '1px solid var(--glass-border)',
+                borderRadius: '15px', color: disabled ? '#ccc' : 'var(--text-primary)', fontSize: '0.9rem',
+                fontWeight: 'bold', cursor: disabled ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
+                boxShadow: disabled ? 'none' : 'var(--shadow-sm)'
               }}>
                 {icon}{label}
               </button>
