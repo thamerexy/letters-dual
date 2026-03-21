@@ -14,11 +14,11 @@ export const GamePlayer: React.FC = () => {
     currentQuestion, questionActive,
     answerRevealed, awardedTeam, revealedAnswer,
     buzzQueue, gamePhase,
-    syncedBoard, syncedTurn,
+    syncedBoard, syncedTurn, matchWinner,
     syncedTeam1Rounds, syncedTeam2Rounds,
   } = useRoomStore();
   
-  const { playClick, playWin } = useAudio();
+  const { playClick, playWin, playRed, playGreen } = useAudio();
   const { isActive: wakeLockActive, toggleWakeLock } = useWakeLock();
 
   const [buzzed, setBuzzed] = useState(false);
@@ -88,6 +88,21 @@ export const GamePlayer: React.FC = () => {
       navigate('/');
     }
   }, [gamePhase, navigate]);
+  useEffect(() => {
+    if (matchWinner) {
+      playWin();
+      // Celebrate with confetti
+      const end = Date.now() + 3000;
+      const colors = matchWinner === 'team1' ? ['#ff416c', '#ff4b2b'] : ['#00b09b', '#96c93d'];
+      (function frame() {
+        import('canvas-confetti').then(confetti => {
+          confetti.default({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors });
+          confetti.default({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors });
+        });
+        if (Date.now() < end) requestAnimationFrame(frame);
+      }());
+    }
+  }, [matchWinner, playWin]);
 
   useEffect(() => {
     if (answerRevealed && awardedTeam === team && team !== 'none') playWin();
@@ -97,7 +112,12 @@ export const GamePlayer: React.FC = () => {
     if (!questionActive || buzzed || buzzedRef.current) return;
     buzzedRef.current = true;
     setBuzzed(true);
-    playClick();
+    
+    // Play team-specific sound
+    if (myTeam === 'team1') playRed();
+    else if (myTeam === 'team2') playGreen();
+    else playClick();
+
     if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
     setBuzzerScale(0.88);
     setTimeout(() => setBuzzerScale(1.1), 150);
@@ -347,6 +367,41 @@ export const GamePlayer: React.FC = () => {
                 )}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Match Winner Overlay ── */}
+      {matchWinner && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(15px)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          zIndex: 5000, animation: 'fadeIn 0.5s ease-out', padding: '20px'
+        }}>
+          <div className="glass-panel" style={{ 
+            padding: '40px', borderRadius: '40px', textAlign: 'center', 
+            boxShadow: '0 30px 60px rgba(0,0,0,0.12)', maxWidth: '500px', width: '100%',
+            animation: 'popUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+          }}>
+            <div style={{ fontSize: '5rem', marginBottom: '20px' }}>🏆</div>
+            <h1 style={{ 
+              fontSize: '2.4rem', fontWeight: '950', textAlign: 'center', lineHeight: '1.2',
+              color: matchWinner === 'team1' ? '#ff416c' : '#00b09b',
+              marginBottom: '10px'
+            }}>
+              {matchWinner === 'team1' ? 'الفريق الأحمر فاز بالمباراة!' : 'الفريق الأخضر فاز بالمباراة!'}
+            </h1>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem', fontWeight: '700', marginBottom: '30px' }}>
+              تهانينا للفائز! حظاً أوفر في المرة القادمة للفريق الآخر.
+            </p>
+            <button 
+              onClick={() => navigate('/')} 
+              className="glass-panel"
+              style={{ padding: '15px 40px', borderRadius: '20px', fontSize: '1.2rem', fontWeight: '900', color: 'var(--text-primary)', cursor: 'pointer' }}
+            >
+              العودة للرئيسية
+            </button>
           </div>
         </div>
       )}

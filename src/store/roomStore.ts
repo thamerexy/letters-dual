@@ -56,6 +56,7 @@ interface RoomState {
   syncedTurn: Team;
   syncedTeam1Rounds: number;
   syncedTeam2Rounds: number;
+  matchWinner: Team | null;
 
   // Actions
   setRoomCode: (code: string | null) => void;
@@ -102,6 +103,7 @@ export const useRoomStore = create<RoomState>((set) => ({
   syncedTurn: 'team1',
   syncedTeam1Rounds: 0,
   syncedTeam2Rounds: 0,
+  matchWinner: null,
 
   setRoomCode: (code) => set({ roomCode: code }),
   setIsAdmin: (isAdmin) => set({ isAdmin }),
@@ -120,6 +122,7 @@ export const useRoomStore = create<RoomState>((set) => ({
     ...(data.currentTurn !== undefined && { syncedTurn: data.currentTurn }),
     ...(data.team1RoundsWon !== undefined && { syncedTeam1Rounds: data.team1RoundsWon }),
     ...(data.team2RoundsWon !== undefined && { syncedTeam2Rounds: data.team2RoundsWon }),
+    ...(data.matchWinner !== undefined && { matchWinner: data.matchWinner }),
     ...(data.questionActive !== undefined && {
       questionActive: data.questionActive,
       buzzQueue: data.questionActive ? state.buzzQueue : [],
@@ -149,5 +152,6 @@ export const useRoomStore = create<RoomState>((set) => ({
     syncedTurn: 'team1',
     syncedTeam1Rounds: 0,
     syncedTeam2Rounds: 0,
+    matchWinner: null,
   }),
 }));
