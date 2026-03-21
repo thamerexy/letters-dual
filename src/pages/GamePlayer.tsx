@@ -90,14 +90,13 @@ export const GamePlayer: React.FC = () => {
   };
 
   const firstBuzz = buzzQueue[0];
-  const isFirstBuzz = firstBuzz?.playerId === clientId;
   const isSyncing = buzzed && !buzzQueue.some(b => b.playerId === clientId);
 
   const hexSizeFactor = isLandscape ? 1.08 : 1.05;
   const hexH = hexSize * 0.866 * hexSizeFactor;
   const boardW = (4 * 0.75 + 1) * hexSize;
   const boardH = 5.5 * hexH;
-  const borderThick = Math.max(12, hexSize * 0.2);
+  const borderThick = Math.max(16, hexSize * 0.28);
 
   const BoardSection = (
     <div style={{ position: 'relative', flexShrink: 0 }}>
@@ -107,12 +106,13 @@ export const GamePlayer: React.FC = () => {
         boxShadow: '0 15px 40px rgba(0,0,0,0.8)',
         border: '1px solid rgba(255,255,255,0.08)' 
       }}>
-        <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: borderThick, background: 'linear-gradient(to bottom, #ff416c, #ff4b2b)', zIndex: 2 }} />
-        <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: borderThick, background: 'linear-gradient(to bottom, #ff416c, #ff4b2b)', zIndex: 2 }} />
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: borderThick, background: 'linear-gradient(to right, #00b09b, #96c93d)', zIndex: 2 }} />
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: borderThick, background: 'linear-gradient(to right, #00b09b, #96c93d)', zIndex: 2 }} />
+        <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: borderThick, background: 'linear-gradient(to bottom, #ff416c, #ff4b2b)', zIndex: 10 }} />
+        <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: borderThick, background: 'linear-gradient(to bottom, #ff416c, #ff4b2b)', zIndex: 10 }} />
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: borderThick, background: 'linear-gradient(to right, #00b09b, #96c93d)', zIndex: 10 }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: borderThick, background: 'linear-gradient(to right, #00b09b, #96c93d)', zIndex: 10 }} />
         
-        <div style={{ position: 'absolute', left: borderThick, top: borderThick, width: boardW, height: boardH, background: 'rgba(10,10,18,0.95)', zIndex: 1 }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(10,12,20,1)', zIndex: 1 }}>
+          <div style={{ position: 'absolute', left: borderThick, top: borderThick, width: boardW, height: boardH }}>
           {syncedBoard.map(hex => {
             const isTeam1 = hex.owner === 'team1';
             const isTeam2 = hex.owner === 'team2';
@@ -144,6 +144,7 @@ export const GamePlayer: React.FC = () => {
               </div>
             );
           })}
+          </div>
         </div>
       </div>
     </div>
@@ -270,7 +271,7 @@ export const GamePlayer: React.FC = () => {
                   fontSize: '0.95rem', fontWeight: '900',
                 }}>
                   <Zap size={16} fill="currentColor" />
-                  {isFirstBuzz ? 'أنت ضغطت أولاً!' : `${firstBuzz.playerName} ضغط أولاً!`}
+                  {firstBuzz.team === 'team1' ? 'الفريق الأحمر هو الذي ضغط أولاً!' : 'الفريق الأخضر هو الذي ضغط أولاً!'}
                 </div>
               </div>
             ) : isSyncing ? (
