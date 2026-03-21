@@ -101,14 +101,10 @@ export const Welcome: React.FC = () => {
       fontFamily: "'Cairo', sans-serif", direction: 'rtl',
     }}>
       {/* Logo */}
-      <div style={{ 
-        marginBottom: '28px', animation: 'fadeInDown 0.8s ease-out',
-        filter: 'drop-shadow(0 15px 35px rgba(0, 176, 155, 0.35))'
-      }}>
+      <div style={{ marginBottom: '28px', animation: 'fadeInDown 0.8s ease-out' }}>
         <img src="./logo.png" alt="الحروف ثنائية" style={{
           width: '160px', height: 'auto', objectFit: 'contain',
-          clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
-          display: 'block'
+          filter: 'drop-shadow(0 10px 30px rgba(0, 176, 155, 0.4))'
         }} />
       </div>
 
