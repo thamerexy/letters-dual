@@ -104,7 +104,8 @@ export const Welcome: React.FC = () => {
       <div style={{ marginBottom: '28px', animation: 'fadeInDown 0.8s ease-out' }}>
         <img src="./logo.png" alt="الحروف ثنائية" style={{
           width: '160px', height: 'auto', objectFit: 'contain',
-          filter: 'drop-shadow(0 10px 30px rgba(0, 176, 155, 0.4))'
+          filter: 'drop-shadow(0 10px 30px rgba(0, 176, 155, 0.4))',
+          mixBlendMode: 'multiply'
         }} />
       </div>
 
