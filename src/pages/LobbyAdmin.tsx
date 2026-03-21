@@ -22,7 +22,7 @@ export const LobbyAdmin: React.FC = () => {
     await broadcastTeamAssign(clientId, team);
   };
 
-  const canStart = players.length >= 1 && players.every(p => p.team !== 'none');
+  const canStart = true; // Allow admin to start anytime as per user request
 
   const handleStartGame = async () => {
     if (!canStart) return;

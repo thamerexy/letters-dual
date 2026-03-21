@@ -19,7 +19,7 @@ export const Settings: React.FC = () => {
     }}>
       <div style={{ width: '100%', maxWidth: '600px', display: 'flex', alignItems: 'center', marginBottom: '40px' }}>
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate(-1)}
           style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '10px' }}
         >
           <ArrowLeft size={32} />
