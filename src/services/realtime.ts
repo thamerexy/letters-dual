@@ -49,7 +49,11 @@ export const subscribeToRoom = (roomCode: string, presence: PlayerPresence): Pro
     channel.on('broadcast', { event: 'GAME' }, ({ payload }: { payload: BroadcastPayload }) => {
       const store = useRoomStore.getState();
       if (payload.type === 'BUZZ') {
-        store.addBuzz(payload.data);
+        // ONLY the Admin processes individual buzz broadcasts to build the official queue.
+        // Players wait for the Admin's GAME_STATE sync.
+        if (store.isAdmin) {
+          store.addBuzz(payload.data);
+        }
       } else if (payload.type === 'TEAM_ASSIGN') {
         if (payload.clientId === store.clientId) {
           store.setMyTeam(payload.team);
@@ -107,7 +111,10 @@ export const broadcastGameState = async (data: GameBroadcast): Promise<void> => 
     type: 'broadcast', event: 'GAME',
     payload: { type: 'GAME_STATE', data } as BroadcastPayload,
   });
-  useRoomStore.getState().applyGameBroadcast(data);
+  // Admin applies locally
+  if (useRoomStore.getState().isAdmin) {
+    useRoomStore.getState().applyGameBroadcast(data);
+  }
 };
 
 /** Player sends a buzz event. Also adds to local queue immediately. */
@@ -117,5 +124,9 @@ export const broadcastBuzz = async (_roomCode: string, buzzData: BuzzEvent): Pro
     type: 'broadcast', event: 'GAME',
     payload: { type: 'BUZZ', data: buzzData } as BroadcastPayload,
   });
-  useRoomStore.getState().addBuzz(buzzData);
+  // NOTE: Players no longer add buzz locally. 
+  // They wait for the Admin's official sorted sync.
+  if (useRoomStore.getState().isAdmin) {
+    useRoomStore.getState().addBuzz(buzzData);
+  }
 };

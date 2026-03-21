@@ -31,6 +31,7 @@ export interface GameBroadcast {
   awardedTeam?: Team | null;
   revealedAnswer?: string | null;
   gamePhase?: GamePhase;
+  buzzQueue?: BuzzEvent[];
 }
 
 interface RoomState {
@@ -128,6 +129,7 @@ export const useRoomStore = create<RoomState>((set) => ({
     ...(data.awardedTeam !== undefined && { awardedTeam: data.awardedTeam }),
     ...(data.revealedAnswer !== undefined && { revealedAnswer: data.revealedAnswer }),
     ...(data.gamePhase !== undefined && { gamePhase: data.gamePhase }),
+    ...(data.buzzQueue !== undefined && { buzzQueue: data.buzzQueue }),
   })),
 
   resetRoom: () => set({

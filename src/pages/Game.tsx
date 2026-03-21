@@ -73,9 +73,10 @@ export const Game: React.FC = () => {
   useEffect(() => {
     broadcastGameState({ 
       gamePhase: 'game',
-      board, currentTurn, team1RoundsWon, team2RoundsWon, winner, matchWinner 
+      board, currentTurn, team1RoundsWon, team2RoundsWon, winner, matchWinner,
+      buzzQueue 
     });
-  }, [board, currentTurn, team1RoundsWon, team2RoundsWon, winner, matchWinner, players.length]);
+  }, [board, currentTurn, team1RoundsWon, team2RoundsWon, winner, matchWinner, players.length, buzzQueue]);
 
   // Broadcast when question becomes active (without answer)
   const prevActiveRef = useRef<string | null>(null);
@@ -87,13 +88,14 @@ export const Game: React.FC = () => {
         gamePhase: 'game',
         questionActive: true, 
         currentQuestion: { question: activeQuestion.question, letter }, 
-        answerRevealed: false, awardedTeam: null, revealedAnswer: null 
+        answerRevealed: false, awardedTeam: null, revealedAnswer: null,
+        buzzQueue // Sync official queue
       });
     } else if (!activeHexId && prevActiveRef.current) {
       prevActiveRef.current = null;
-      broadcastGameState({ gamePhase: 'game', questionActive: false, currentQuestion: null });
+      broadcastGameState({ gamePhase: 'game', questionActive: false, currentQuestion: null, buzzQueue: [] });
     }
-  }, [activeHexId, activeQuestion, board]);
+  }, [activeHexId, activeQuestion, board, buzzQueue]);
 
   const executeAction = async () => {
     if (showWarningDialog === 'reset') {
@@ -110,7 +112,7 @@ export const Game: React.FC = () => {
   const handleAnswerComplete = async (claimedBy: Team | null) => {
     const answer = activeQuestion?.answer || '';
     // Reveal answer to all players
-    await broadcastGameState({ answerRevealed: true, awardedTeam: claimedBy ?? 'none', revealedAnswer: answer });
+    await broadcastGameState({ answerRevealed: true, awardedTeam: claimedBy ?? 'none', revealedAnswer: answer, buzzQueue });
 
     if (activeHexId && claimedBy && claimedBy !== 'none') {
       claimHex(activeHexId, claimedBy);
@@ -132,10 +134,12 @@ export const Game: React.FC = () => {
     }}>
       {/* ── Fixed Header (Fixes Overlap) ── */}
       <div style={{
-        position: 'absolute', top: 0, left: 0, right: 0, height: '64px',
-        padding: '0 20px', zIndex: 1000,
+        position: 'absolute', top: 0, left: 0, right: 0, 
+        minHeight: '64px', height: isLandscape ? '64px' : 'auto',
+        padding: isLandscape ? '0 20px' : '10px 15px', zIndex: 1000,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(15px)',
+        flexWrap: 'wrap', gap: '10px',
+        background: 'rgba(15,15,15,0.95)', backdropFilter: 'blur(15px)',
         borderBottom: '1px solid rgba(255,255,255,0.1)',
         direction: 'rtl', fontFamily: "'Cairo', sans-serif"
       }}>
@@ -191,7 +195,8 @@ export const Game: React.FC = () => {
         transform: `scale(${scale})`,
         display: 'flex', flexDirection: isLandscape ? 'row' : 'column',
         alignItems: 'center', justifyContent: 'center',
-        gap: '40px', width: '100%', height: 'calc(100% - 64px)', marginTop: '64px',
+        gap: '40px', width: '100%', height: 'calc(100% - 70px)', 
+        marginTop: isLandscape ? '64px' : '90px',
       }}>
         {/* Side Panel */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px', width: isLandscape ? '380px' : '100%', flexShrink: 0 }}>
