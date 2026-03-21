@@ -285,6 +285,17 @@ export const Welcome: React.FC = () => {
         </div>
       )}
 
+      {/* Credits */}
+      <div style={{
+        marginTop: '32px', padding: '12px 20px', borderRadius: '15px',
+        background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)',
+        textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-secondary)',
+        display: 'flex', flexDirection: 'column', gap: '2px', animation: 'fadeIn 1.2s'
+      }}>
+        <div style={{ fontWeight: '800', opacity: 0.6 }}>Created by:</div>
+        <div style={{ fontWeight: '950', color: 'var(--text-primary)' }}>thamerex@outlook.com</div>
+      </div>
+
       <style>{`
         @keyframes fadeInDown { from { opacity:0; transform:translateY(-25px); } to { opacity:1; transform:translateY(0); } }
         @keyframes fadeInUp   { from { opacity:0; transform:translateY(25px);  } to { opacity:1; transform:translateY(0); } }

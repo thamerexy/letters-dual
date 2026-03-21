@@ -128,7 +128,7 @@ export const GamePlayer: React.FC = () => {
   const isSyncing = buzzed && !buzzQueue.some(b => b.playerId === clientId);
 
   const BoardSection = (
-    <div style={{ transform: `scale(${isLandscape ? 1.05 : 0.85})`, transformOrigin: 'center center' }}>
+    <div style={{ transform: `scale(${isLandscape ? 0.92 : 0.85})`, transformOrigin: 'center center' }}>
       <Board 
         isPlayerView 
         syncedBoard={syncedBoard} 
@@ -295,12 +295,6 @@ export const GamePlayer: React.FC = () => {
                   انتظار السؤال...
                 </div>
               ) : SharedBuzzButton}
-            </div>
-          )}
-
-          {!isLandscape && !questionActive && (
-            <div style={{ marginTop: '10px' }}>
-              {SharedBuzzButton}
             </div>
           )}
         </div>
