@@ -57,6 +57,7 @@ interface RoomState {
   syncedTurn: Team;
   syncedTeam1Rounds: number;
   syncedTeam2Rounds: number;
+  winner: Team | null;
   matchWinner: Team | null;
   hideQuestionFromPlayers: boolean;
 
@@ -105,6 +106,7 @@ export const useRoomStore = create<RoomState>((set) => ({
   syncedTurn: 'team1',
   syncedTeam1Rounds: 0,
   syncedTeam2Rounds: 0,
+  winner: null,
   matchWinner: null,
   hideQuestionFromPlayers: false,
 
@@ -125,6 +127,7 @@ export const useRoomStore = create<RoomState>((set) => ({
     ...(data.currentTurn !== undefined && { syncedTurn: data.currentTurn }),
     ...(data.team1RoundsWon !== undefined && { syncedTeam1Rounds: data.team1RoundsWon }),
     ...(data.team2RoundsWon !== undefined && { syncedTeam2Rounds: data.team2RoundsWon }),
+    ...(data.winner !== undefined && { winner: data.winner }),
     ...(data.matchWinner !== undefined && { matchWinner: data.matchWinner }),
     ...(data.hideQuestionFromPlayers !== undefined && { hideQuestionFromPlayers: data.hideQuestionFromPlayers }),
     ...(data.questionActive !== undefined && {

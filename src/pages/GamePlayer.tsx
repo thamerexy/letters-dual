@@ -5,7 +5,7 @@ import { broadcastBuzz } from '../services/realtime';
 import { useAudio } from '../hooks/useAudio';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { Zap, Sun, Moon } from 'lucide-react';
-import { Hexagon } from '../components/Hexagon';
+import { Board } from '../components/Board';
 
 export const GamePlayer: React.FC = () => {
   const navigate = useNavigate();
@@ -14,7 +14,7 @@ export const GamePlayer: React.FC = () => {
     currentQuestion, questionActive,
     answerRevealed, awardedTeam, revealedAnswer,
     buzzQueue, gamePhase,
-    syncedBoard, syncedTurn, matchWinner, hideQuestionFromPlayers,
+    syncedBoard, syncedTurn, winner, matchWinner, hideQuestionFromPlayers,
     syncedTeam1Rounds, syncedTeam2Rounds,
   } = useRoomStore();
   
@@ -24,7 +24,6 @@ export const GamePlayer: React.FC = () => {
   const [buzzed, setBuzzed] = useState(false);
   const [buzzerScale, setBuzzerScale] = useState(1);
   const [isLandscape, setIsLandscape] = useState(false);
-  const [hexSize, setHexSize] = useState(60);
   const [timeLeft, setTimeLeft] = useState(20);
   const buzzedRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -33,38 +32,12 @@ export const GamePlayer: React.FC = () => {
   const teamColor = team === 'team1' ? '#ff416c' : '#00b09b';
   const teamLabel = team === 'team1' ? 'الفريق الأحمر' : team === 'team2' ? 'الفريق الأخضر' : 'بدون فريق';
 
-  // Responsive hex sizing
-  const calcHexSize = useCallback(() => {
-    const ww = window.innerWidth;
-    const wh = window.innerHeight;
-    const landscape = ww > wh;
-    setIsLandscape(landscape);
-
-    const padding = 15;
-    const headerHeight = 56;
-
-    if (landscape) {
-      // Board takes 50% width
-      const availW = ww * 0.5 - padding * 2;
-      const availH = wh - headerHeight - padding * 2;
-      const fromW = availW / 4.2;
-      const fromH = availH / (5.6 * 0.866);
-      setHexSize(Math.max(34, Math.floor(Math.min(fromW, fromH))));
-    } else {
-      // Portrait Board at bottom
-      const availW = ww - padding * 2;
-      const availH = wh * 0.4 - padding;
-      const fromW = availW / 4.2;
-      const fromH = availH / (5.6 * 0.866);
-      setHexSize(Math.max(32, Math.floor(Math.min(fromW, fromH))));
-    }
-  }, []);
-
   useEffect(() => {
-    calcHexSize();
-    window.addEventListener('resize', calcHexSize);
-    return () => window.removeEventListener('resize', calcHexSize);
-  }, [calcHexSize]);
+    const handleResize = () => setIsLandscape(window.innerWidth > window.innerHeight);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     setBuzzed(false);
@@ -109,12 +82,17 @@ export const GamePlayer: React.FC = () => {
   }, [answerRevealed, awardedTeam, team, playWin]);
 
   // Sync Buzzer Audio for all players
+  const lastBuzzIdRef = useRef<string | null>(null);
   useEffect(() => {
-    if (buzzQueue.length === 1 && questionActive) {
-      if (buzzQueue[0].team === 'team1') playRed();
-      else if (buzzQueue[0].team === 'team2') playGreen();
+    const firstBuzz = buzzQueue[0];
+    if (firstBuzz && firstBuzz.playerId !== lastBuzzIdRef.current) {
+      lastBuzzIdRef.current = firstBuzz.playerId;
+      if (firstBuzz.team === 'team1') playRed();
+      else if (firstBuzz.team === 'team2') playGreen();
+    } else if (!firstBuzz) {
+      lastBuzzIdRef.current = null;
     }
-  }, [buzzQueue, questionActive, playRed, playGreen]);
+  }, [buzzQueue, playRed, playGreen]);
 
   // Response Timer (15s) once someone buzzes
   const prevBuzzId = useRef<string | null>(null);
@@ -149,36 +127,14 @@ export const GamePlayer: React.FC = () => {
   const firstBuzz = buzzQueue[0];
   const isSyncing = buzzed && !buzzQueue.some(b => b.playerId === clientId);
 
-  const hexStretchFactor = isLandscape ? 1.35 : 1.05;
-  const hexH = hexSize * 0.866;
-  const hexW = hexSize * hexStretchFactor;
-  const boardW = (4 * 0.75 + 1) * hexW;
-  const boardH = 5.5 * hexH;
-
   const BoardSection = (
-    <div style={{ position: 'relative', flexShrink: 0, '--hex-width': `${hexW}px`, '--hex-height': `${hexH}px` } as React.CSSProperties}>
-      <div className="game-board" style={{ 
-        width: boardW, height: boardH, position: 'relative'
-      }}>
-        {/* Background borders - Identical to Board.tsx */}
-        <div style={{ position: 'absolute', top: -15, left: -20, right: -20, bottom: -15, zIndex: 0, borderRadius: '24px', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
-          <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: 35, background: 'linear-gradient(to bottom, #ff416c, #ff4b2b)', boxShadow: '4px 0 10px rgba(255,65,108,0.2)' }} />
-          <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: 35, background: 'linear-gradient(to bottom, #ff416c, #ff4b2b)', boxShadow: '-4px 0 10px rgba(255,65,108,0.2)' }} />
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 60, background: 'linear-gradient(to right, #00b09b, #96c93d)', boxShadow: '0 4px 10px rgba(0,176,155,0.2)' }} />
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 60, background: 'linear-gradient(to right, #00b09b, #96c93d)', boxShadow: '0 -4px 10px rgba(0,176,155,0.2)' }} />
-        </div>
-        
-        {/* Soft Board Background */}
-        <div style={{ position: 'absolute', inset: 0, background: '#f8f9fa', zIndex: 1, borderRadius: '20px' }} />
-
-        <div className="hex-grid" style={{ position: 'relative', zIndex: 2, width: '100%', height: '100%' }}>
-          {syncedBoard.map(hex => (
-            <div key={hex.id} style={{ position: 'absolute', left: hex.colIndex * (hexW * 0.75), top: hex.row * hexH }}>
-              <Hexagon letter={hex.letter} owner={hex.owner as any} />
-            </div>
-          ))}
-        </div>
-      </div>
+    <div style={{ transform: `scale(${isLandscape ? 1.05 : 0.85})`, transformOrigin: 'center center' }}>
+      <Board 
+        isPlayerView 
+        syncedBoard={syncedBoard} 
+        syncedWinner={winner} 
+        syncedMatchWinner={matchWinner} 
+      />
     </div>
   );
 
@@ -442,40 +398,7 @@ export const GamePlayer: React.FC = () => {
         </div>
       )}
 
-      {/* ── Match Winner Overlay ── */}
-      {matchWinner && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(15px)',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          zIndex: 5000, animation: 'fadeIn 0.5s ease-out', padding: '20px'
-        }}>
-          <div className="glass-panel" style={{ 
-            padding: '40px', borderRadius: '40px', textAlign: 'center', 
-            boxShadow: '0 30px 60px rgba(0,0,0,0.12)', maxWidth: '500px', width: '100%',
-            animation: 'popUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-          }}>
-            <div style={{ fontSize: '5rem', marginBottom: '20px' }}>🏆</div>
-            <h1 style={{ 
-              fontSize: '2.4rem', fontWeight: '950', textAlign: 'center', lineHeight: '1.2',
-              color: matchWinner === 'team1' ? '#ff416c' : '#00b09b',
-              marginBottom: '10px'
-            }}>
-              {matchWinner === 'team1' ? 'الفريق الأحمر فاز بالمباراة!' : 'الفريق الأخضر فاز بالمباراة!'}
-            </h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem', fontWeight: '700', marginBottom: '30px' }}>
-              تهانينا للفائز! حظاً أوفر في المرة القادمة للفريق الآخر.
-            </p>
-            <button 
-              onClick={() => navigate('/')} 
-              className="glass-panel"
-              style={{ padding: '15px 40px', borderRadius: '20px', fontSize: '1.2rem', fontWeight: '900', color: 'var(--text-primary)', cursor: 'pointer' }}
-            >
-              العودة للرئيسية
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Match Winner Overlay is now integrated into the Board component for better parity */}
 
       <style>{`
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

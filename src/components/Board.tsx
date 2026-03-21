@@ -2,15 +2,31 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Hexagon } from './Hexagon';
 import { useGameStore } from '../store/gameStore';
-import type { HexState } from '../store/gameStore';
+import type { HexState, Team } from '../store/gameStore';
 import { getRandomQuestionForLetter } from '../services/questions';
 import { useAudio } from '../hooks/useAudio';
 import confetti from 'canvas-confetti';
 
-export const Board: React.FC = () => {
-  const { board, winner, matchWinner, nextRound, unclaimHex, setActiveQuestion } = useGameStore();
+interface BoardProps {
+  isPlayerView?: boolean;
+  syncedBoard?: HexState[];
+  syncedWinner?: Team | null;
+  syncedMatchWinner?: Team | null;
+}
+
+export const Board: React.FC<BoardProps> = ({ 
+  isPlayerView = false,
+  syncedBoard,
+  syncedWinner,
+  syncedMatchWinner
+}) => {
+  const { board: storeBoard, winner: storeWinner, matchWinner: storeMatchWinner, nextRound, unclaimHex, setActiveQuestion } = useGameStore();
   const { playClick, playWin } = useAudio();
   
+  const board = isPlayerView ? (syncedBoard || []) : storeBoard;
+  const winner = isPlayerView ? syncedWinner : storeWinner;
+  const matchWinner = isPlayerView ? syncedMatchWinner : storeMatchWinner;
+
   const [hexToUnclaim, setHexToUnclaim] = useState<HexState | null>(null);
   const [hideWinScreen, setHideWinScreen] = useState(false);
 
@@ -100,10 +116,12 @@ export const Board: React.FC = () => {
             </p>
 
             <div style={{ display: 'flex', gap: '15px', direction: 'rtl', flexWrap: 'wrap', justifyContent: 'center' }}>
-              {!matchWinner && (
+              {!matchWinner && !isPlayerView && (
                 <button onClick={() => nextRound()} style={{ flex: '1 1 auto', padding: '14px 24px', background: 'linear-gradient(135deg, #36D1DC 0%, #5B86E5 100%)', border: 'none', borderRadius: '16px', color: 'white', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 8px 16px rgba(91, 134, 229, 0.3)' }}>الجولة التالية</button>
               )}
-              <button onClick={() => useGameStore.getState().undoLastMove()} style={{ flex: '1 1 auto', padding: '14px 24px', background: 'linear-gradient(135deg, #ff9966 0%, #ff5e62 100%)', border: 'none', borderRadius: '16px', color: 'white', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 8px 16px rgba(255, 94, 98, 0.3)' }}>تراجع</button>
+              {!isPlayerView && (
+                <button onClick={() => useGameStore.getState().undoLastMove()} style={{ flex: '1 1 auto', padding: '14px 24px', background: 'linear-gradient(135deg, #ff9966 0%, #ff5e62 100%)', border: 'none', borderRadius: '16px', color: 'white', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 8px 16px rgba(255, 94, 98, 0.3)' }}>تراجع</button>
+              )}
               <button onClick={() => setHideWinScreen(true)} style={{ flex: '1 1 auto', padding: '14px 24px', background: 'rgba(0,0,0,0.05)', border: '1px solid var(--glass-border)', borderRadius: '16px', color: '#666', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer' }}>إغلاق</button>
             </div>
           </div>
