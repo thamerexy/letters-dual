@@ -61,7 +61,10 @@ export const Game: React.FC = () => {
 
   // Sync board state to all players whenever it changes OR a new player joins
   useEffect(() => {
-    broadcastGameState({ board, currentTurn, team1RoundsWon, team2RoundsWon, winner, matchWinner });
+    broadcastGameState({ 
+      gamePhase: 'game',
+      board, currentTurn, team1RoundsWon, team2RoundsWon, winner, matchWinner 
+    });
   }, [board, currentTurn, team1RoundsWon, team2RoundsWon, winner, matchWinner, players.length]);
 
   // Broadcast when question becomes active (without answer)
@@ -70,10 +73,15 @@ export const Game: React.FC = () => {
     if (activeHexId && activeQuestion && activeHexId !== prevActiveRef.current) {
       prevActiveRef.current = activeHexId;
       const letter = board.find(h => h.id === activeHexId)?.letter || '';
-      broadcastGameState({ questionActive: true, currentQuestion: { question: activeQuestion.question, letter }, answerRevealed: false, awardedTeam: null, revealedAnswer: null });
+      broadcastGameState({ 
+        gamePhase: 'game',
+        questionActive: true, 
+        currentQuestion: { question: activeQuestion.question, letter }, 
+        answerRevealed: false, awardedTeam: null, revealedAnswer: null 
+      });
     } else if (!activeHexId && prevActiveRef.current) {
       prevActiveRef.current = null;
-      broadcastGameState({ questionActive: false, currentQuestion: null });
+      broadcastGameState({ gamePhase: 'game', questionActive: false, currentQuestion: null });
     }
   }, [activeHexId, activeQuestion, board]);
 
