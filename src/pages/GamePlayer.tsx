@@ -31,7 +31,7 @@ export const GamePlayer: React.FC = () => {
 
   const team = myTeam;
   const teamColor = team === 'team1' ? '#ff416c' : '#00b09b';
-  const teamLabel = team === 'team1' ? 'الفريق الأحمر' : 'الفريق الأخضر';
+  const teamLabel = team === 'team1' ? 'الفريق الأحمر' : team === 'team2' ? 'الفريق الأخضر' : 'بدون فريق';
 
   // Responsive hex sizing
   const calcHexSize = useCallback(() => {
@@ -84,7 +84,7 @@ export const GamePlayer: React.FC = () => {
   }, [questionActive, buzzed, timeLeft]);
 
   useEffect(() => {
-    if (gamePhase === 'finished' || gamePhase === 'lobby') {
+    if (gamePhase === 'lobby') {
       navigate('/');
     }
   }, [gamePhase, navigate]);
@@ -250,6 +250,24 @@ export const GamePlayer: React.FC = () => {
         </div>
       </div>
 
+      {/* ── Waiting for Team Screen ── */}
+      {team === 'none' && (
+        <div style={{ 
+          position: 'fixed', inset: 0, zIndex: 500, background: 'var(--bg-main)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          padding: '24px', textAlign: 'center'
+        }}>
+          <div className="glass-panel" style={{ padding: '40px', borderRadius: '32px', maxWidth: '400px', boxShadow: 'var(--shadow-lg)', animation: 'popUp 0.5s ease-out' }}>
+            <div style={{ fontSize: '4rem', marginBottom: '20px' }}>⏳</div>
+            <h2 style={{ fontSize: '1.8rem', fontWeight: '950', color: 'var(--text-primary)', marginBottom: '12px' }}>في انتظار الانضمام...</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', lineHeight: 1.6, fontWeight: '700' }}>
+              أهلاً {myName}! <br/>
+              يرجى الانتظار حتى يقوم مشرف اللعبة بتوزيعك على أحد الفريقين (الأحمر أو الأخضر).
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* ── Main Layout ── */}
       <div style={{ flex: 1, display: 'flex', flexDirection: isLandscape ? 'row' : 'column', alignItems: 'center', gap: '20px', padding: '15px', overflow: 'hidden' }}>
         
@@ -286,7 +304,7 @@ export const GamePlayer: React.FC = () => {
                     {buzz.playerName}
                   </span>
                   <span style={{ fontSize: '0.75rem', color: '#555' }}>
-                    {buzz.team === 'team1' ? 'أحمر' : 'أخضر'}
+                    {buzz.team === 'team1' ? 'الفريق الأحمر' : 'الفريق الأخضر'}
                   </span>
                 </div>
               ))}
@@ -304,11 +322,11 @@ export const GamePlayer: React.FC = () => {
           {/* Scoreboard (Identical to Admin) */}
           <div style={{ display: 'flex', width: '100%', height: '64px', borderRadius: '15px', overflow: 'hidden', boxShadow: 'var(--shadow-lg)', position: 'relative', border: '1px solid var(--glass-border)' }}>
             <div style={{ flex: 1, background: 'linear-gradient(135deg, #ff416c, #ff4b2b)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>أحمر</span>
+              <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>الفريق الأحمر</span>
               <span style={{ fontSize: '1.6rem', fontWeight: '950' }}>{syncedTeam1Rounds}</span>
             </div>
             <div style={{ flex: 1, background: 'linear-gradient(135deg, #00b09b, #96c93d)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>أخضر</span>
+              <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>الفريق الأخضر</span>
               <span style={{ fontSize: '1.6rem', fontWeight: '950' }}>{syncedTeam2Rounds}</span>
             </div>
           </div>

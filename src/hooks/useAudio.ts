@@ -55,12 +55,14 @@ export const useAudio = () => {
   }, [playSynth]);
 
   const playRed = useCallback(() => {
-    const audio = new Audio('/sounds/red.m4a');
+    const baseUrl = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : import.meta.env.BASE_URL + '/';
+    const audio = new Audio(`${baseUrl}sounds/red.m4a`);
     audio.play().catch(e => console.error("Audio play failed:", e));
   }, []);
 
   const playGreen = useCallback(() => {
-    const audio = new Audio('/sounds/Green.m4a');
+    const baseUrl = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : import.meta.env.BASE_URL + '/';
+    const audio = new Audio(`${baseUrl}sounds/Green.m4a`);
     audio.play().catch(e => console.error("Audio play failed:", e));
   }, []);
 

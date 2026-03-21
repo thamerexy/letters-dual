@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Users, Download, Settings as SettingsIcon } from 'lucide-react';
+import { Shield, Users, Download } from 'lucide-react';
 import { fetchAllQuestions } from '../services/questions';
 import { generateRoomCode, useRoomStore } from '../store/roomStore';
 import type { PlayerPresence } from '../store/roomStore';
@@ -100,22 +100,6 @@ export const Welcome: React.FC = () => {
       color: 'var(--text-primary)', padding: '20px', overflow: 'hidden',
       fontFamily: "'Cairo', sans-serif", direction: 'rtl',
     }}>
-      {/* Settings Button */}
-      <button 
-        onClick={() => navigate('/settings')}
-        style={{
-          position: 'absolute', top: '24px', left: '24px',
-          background: 'white', border: '1px solid var(--glass-border)',
-          borderRadius: '16px', padding: '12px', cursor: 'pointer',
-          boxShadow: 'var(--shadow-sm)', zIndex: 100,
-          transition: 'all 0.3s'
-        }}
-        onMouseOver={(e) => { e.currentTarget.style.transform = 'rotate(45deg) scale(1.1)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
-        onMouseOut={(e) => { e.currentTarget.style.transform = 'rotate(0deg) scale(1)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
-      >
-        <SettingsIcon size={24} color="var(--text-secondary)" />
-      </button>
-
       {/* Logo */}
       <div style={{ marginBottom: '28px', animation: 'fadeInDown 0.8s ease-out' }}>
         <img src="./logo.png" alt="الحروف ثنائية" style={{

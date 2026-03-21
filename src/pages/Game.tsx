@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Board } from '../components/Board';
 import { useNavigate } from 'react-router-dom';
 import { 
-  RotateCcw, Home, Undo2, Zap, Users, Sun, Moon, Bell 
+  RotateCcw, Home, Undo2, Zap, Users, Sun, Moon, Bell, Settings as SettingsIcon 
 } from 'lucide-react';
 import { useGameStore } from '../store/gameStore';
 import type { Team } from '../store/gameStore';
@@ -78,7 +78,7 @@ export const Game: React.FC = () => {
       board, currentTurn, team1RoundsWon, team2RoundsWon, winner, matchWinner,
       buzzQueue, hideQuestionFromPlayers
     });
-  }, [board, currentTurn, team1RoundsWon, team2RoundsWon, winner, matchWinner, players.length, buzzQueue]);
+  }, [board, currentTurn, team1RoundsWon, team2RoundsWon, winner, matchWinner, players.length, buzzQueue, hideQuestionFromPlayers]);
 
   // Broadcast when question becomes active (without answer)
   const prevActiveRef = useRef<string | null>(null);
@@ -185,6 +185,20 @@ export const Game: React.FC = () => {
             <div style={{ fontSize: '0.45rem', color: '#ff6b6b', letterSpacing: '0.5px', fontWeight: '800', lineHeight: 1 }}>ROOM</div>
             <div style={{ fontSize: '1.1rem', fontWeight: '950', letterSpacing: '2px', color: '#ff6b6b', lineHeight: 1 }}>{roomCode}</div>
           </div>
+
+          <button 
+            onClick={() => navigate('/settings')}
+            style={{ 
+              background: 'white', border: '1px solid var(--glass-border)', 
+              borderRadius: '10px', padding: '6px', color: 'var(--text-secondary)', cursor: 'pointer', 
+              display: 'flex', alignItems: 'center', transition: 'all 0.2s',
+              boxShadow: 'var(--shadow-sm)'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.transform = 'rotate(45deg)'}
+            onMouseOut={(e) => e.currentTarget.style.transform = 'rotate(0deg)'}
+          >
+            <SettingsIcon size={20} />
+          </button>
         </div>
       </div>
 
@@ -256,11 +270,11 @@ export const Game: React.FC = () => {
               <span style={{ background: '#f8f9fa', padding: '1px 8px', borderRadius: '0 0 8px 8px', fontSize: '0.7rem', border: '1px solid var(--glass-border)', borderTop: 'none', color: '#666' }}>المطلوب {requiredRoundsToWin}</span>
             </div>
             <div style={{ flex: 1, background: 'linear-gradient(135deg, #ff416c, #ff4b2b)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>أحمر</span>
+              <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>الفريق الأحمر</span>
               <span style={{ fontSize: '1.5rem', fontWeight: '900' }}>{team1RoundsWon}</span>
             </div>
             <div style={{ flex: 1, background: 'linear-gradient(135deg, #00b09b, #96c93d)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>أخضر</span>
+              <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>الفريق الأخضر</span>
               <span style={{ fontSize: '1.5rem', fontWeight: '900' }}>{team2RoundsWon}</span>
             </div>
           </div>
