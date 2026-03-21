@@ -25,6 +25,7 @@ export interface GameBroadcast {
   team2RoundsWon?: number;
   winner?: Team | null;
   matchWinner?: Team | null;
+  hideQuestionFromPlayers?: boolean;
   questionActive?: boolean;
   currentQuestion?: { question: string; letter: string } | null;
   answerRevealed?: boolean;
@@ -57,6 +58,7 @@ interface RoomState {
   syncedTeam1Rounds: number;
   syncedTeam2Rounds: number;
   matchWinner: Team | null;
+  hideQuestionFromPlayers: boolean;
 
   // Actions
   setRoomCode: (code: string | null) => void;
@@ -104,6 +106,7 @@ export const useRoomStore = create<RoomState>((set) => ({
   syncedTeam1Rounds: 0,
   syncedTeam2Rounds: 0,
   matchWinner: null,
+  hideQuestionFromPlayers: false,
 
   setRoomCode: (code) => set({ roomCode: code }),
   setIsAdmin: (isAdmin) => set({ isAdmin }),
@@ -123,6 +126,7 @@ export const useRoomStore = create<RoomState>((set) => ({
     ...(data.team1RoundsWon !== undefined && { syncedTeam1Rounds: data.team1RoundsWon }),
     ...(data.team2RoundsWon !== undefined && { syncedTeam2Rounds: data.team2RoundsWon }),
     ...(data.matchWinner !== undefined && { matchWinner: data.matchWinner }),
+    ...(data.hideQuestionFromPlayers !== undefined && { hideQuestionFromPlayers: data.hideQuestionFromPlayers }),
     ...(data.questionActive !== undefined && {
       questionActive: data.questionActive,
       buzzQueue: data.questionActive ? state.buzzQueue : [],
@@ -153,5 +157,6 @@ export const useRoomStore = create<RoomState>((set) => ({
     syncedTeam1Rounds: 0,
     syncedTeam2Rounds: 0,
     matchWinner: null,
+    hideQuestionFromPlayers: false,
   }),
 }));

@@ -12,8 +12,9 @@ interface QuestionModalProps {
   onAnswerComplete: (claimedBy: Team | null) => void;
   onClose: () => void;
   inline?: boolean;
-  showAnswer?: boolean;  // Admin always true; player view not used (player has its own UI)
+  showAnswer?: boolean;  
   buzzQueue?: BuzzEvent[];
+  hideQuestion?: boolean;
 }
 
 export const QuestionModal: React.FC<QuestionModalProps> = ({
@@ -25,6 +26,7 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
   onClose,
   showAnswer = true,
   buzzQueue = [],
+  hideQuestion = false,
 }) => {
   const [showAnswerText, setShowAnswerText] = useState(false);
   const [timeLeft, setTimeLeft] = useState(20);
@@ -45,6 +47,19 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
     }, 1000);
     return () => clearInterval(timer);
   }, [isOpen, showAnswerText, timeLeft]);
+
+  // Response Timer (15s) once someone buzzes
+  const prevBuzzId = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    const firstBuzz = buzzQueue[0];
+    if (firstBuzz && firstBuzz.playerId !== prevBuzzId.current) {
+      prevBuzzId.current = firstBuzz.playerId;
+      // Reset timer to 15 seconds for the response
+      setTimeLeft(15);
+    } else if (!firstBuzz) {
+      prevBuzzId.current = null;
+    }
+  }, [buzzQueue]);
 
   if (!isOpen) return null;
 
@@ -113,8 +128,15 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
         </div>
       )}
 
-      <p style={{ fontSize: 'clamp(1rem, 4vh, 1.35rem)', fontWeight: '800', margin: '12px 0 24px', color: 'var(--text-primary)', lineHeight: 1.5 }}>
-        {question}
+      <p style={{ 
+        fontSize: 'clamp(1rem, 4vh, 1.35rem)', fontWeight: '800', 
+        margin: '12px 0 24px', color: 'var(--text-primary)', lineHeight: 1.5,
+        fontStyle: (hideQuestion && !firstBuzz) ? 'italic' : 'normal',
+        opacity: (hideQuestion && !firstBuzz) ? 0.6 : 1
+      }}>
+        {hideQuestion && !firstBuzz 
+          ? 'المشرف يقرأ السؤال الآن... استعد للضغط!' 
+          : question}
       </p>
 
       {!showAnswerText ? (

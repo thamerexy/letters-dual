@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trophy } from 'lucide-react';
+import { ArrowLeft, Trophy, Zap } from 'lucide-react';
 import { useGameStore } from '../store/gameStore';
 
 export const Settings: React.FC = () => {
@@ -59,6 +59,44 @@ export const Settings: React.FC = () => {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Hide Questions Toggle */}
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: '20px', background: 'rgba(255,255,255,0.05)', borderRadius: '15px',
+        width: '100%', maxWidth: '500px', marginTop: '20px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div style={{ 
+            width: '40px', height: '40px', borderRadius: '12px', 
+            background: 'rgba(255,255,255,0.1)', display: 'flex', 
+            alignItems: 'center', justifyContent: 'center' 
+          }}>
+            <Zap size={24} color="#ffd200" />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>إخفاء الأسئلة عن اللاعبين</span>
+            <span style={{ fontSize: '0.9rem', color: '#aaa' }}>إظهار زر الضغط فقط</span>
+          </div>
+        </div>
+
+        <button
+          onClick={() => useGameStore.getState().setHideQuestionFromPlayers(!useGameStore.getState().hideQuestionFromPlayers)}
+          style={{
+            width: '60px', height: '32px', borderRadius: '20px',
+            background: useGameStore.getState().hideQuestionFromPlayers ? '#4cd964' : '#555',
+            position: 'relative', border: 'none', cursor: 'pointer', transition: 'background 0.3s'
+          }}
+        >
+          <div style={{
+            position: 'absolute', top: '4px',
+            right: useGameStore.getState().hideQuestionFromPlayers ? '4px' : '32px',
+            width: '24px', height: '24px', borderRadius: '50%', background: 'white',
+            transition: 'right 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+          }} />
+        </button>
       </div>
     </div>
   );

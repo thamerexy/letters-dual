@@ -80,8 +80,10 @@ interface GameState {
 
   activeHexId: string | null;
   activeQuestion: QuestionData | null;
+  hideQuestionFromPlayers: boolean;
 
   setRequiredRounds: (rounds: number) => void;
+  setHideQuestionFromPlayers: (val: boolean) => void;
   setActiveQuestion: (hexId: string | null, question: QuestionData | null) => void;
   claimHex: (id: string, team: Team) => void;
   unclaimHex: (id: string) => void;
@@ -161,8 +163,10 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   activeHexId: null,
   activeQuestion: null,
+  hideQuestionFromPlayers: false,
 
   setRequiredRounds: (rounds: number) => set({ requiredRoundsToWin: rounds }),
+  setHideQuestionFromPlayers: (val) => set({ hideQuestionFromPlayers: val }),
   setActiveQuestion: (hexId, question) => set({ activeHexId: hexId, activeQuestion: question }),
   
   claimHex: (id: string, team: Team) => {
@@ -297,7 +301,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       previousTurn: null,
       previousWinner: null,
       activeHexId: null,
-      activeQuestion: null
+      activeQuestion: null,
+      hideQuestionFromPlayers: false
     });
   }
 }));

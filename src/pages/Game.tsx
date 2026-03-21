@@ -23,7 +23,8 @@ export const Game: React.FC = () => {
     resetGame, undoLastMove, previousBoard,
     team1RoundsWon, team2RoundsWon, requiredRoundsToWin,
     activeHexId, activeQuestion, claimHex, nextTurn,
-    setActiveQuestion, board, currentTurn, winner, matchWinner
+    setActiveQuestion, board, currentTurn, winner, matchWinner,
+    hideQuestionFromPlayers
   } = useGameStore();
   const { buzzQueue, clearBuzzes, roomCode, players } = useRoomStore();
   const [showPlayerPanel, setShowPlayerPanel] = useState(false);
@@ -75,7 +76,7 @@ export const Game: React.FC = () => {
     broadcastGameState({ 
       gamePhase: 'game',
       board, currentTurn, team1RoundsWon, team2RoundsWon, winner, matchWinner,
-      buzzQueue 
+      buzzQueue, hideQuestionFromPlayers
     });
   }, [board, currentTurn, team1RoundsWon, team2RoundsWon, winner, matchWinner, players.length, buzzQueue]);
 
@@ -90,13 +91,14 @@ export const Game: React.FC = () => {
         questionActive: true, 
         currentQuestion: { question: activeQuestion.question, letter }, 
         answerRevealed: false, awardedTeam: null, revealedAnswer: null,
-        buzzQueue // Sync official queue
+        buzzQueue, // Sync official queue
+        hideQuestionFromPlayers
       });
     } else if (!activeHexId && prevActiveRef.current) {
       prevActiveRef.current = null;
-      broadcastGameState({ gamePhase: 'game', questionActive: false, currentQuestion: null, buzzQueue: [] });
+      broadcastGameState({ gamePhase: 'game', questionActive: false, currentQuestion: null, buzzQueue: [], hideQuestionFromPlayers });
     }
-  }, [activeHexId, activeQuestion, board, buzzQueue]);
+  }, [activeHexId, activeQuestion, board, buzzQueue, hideQuestionFromPlayers]);
 
   const executeAction = async () => {
     if (showWarningDialog === 'reset') {

@@ -14,7 +14,7 @@ export const GamePlayer: React.FC = () => {
     currentQuestion, questionActive,
     answerRevealed, awardedTeam, revealedAnswer,
     buzzQueue, gamePhase,
-    syncedBoard, syncedTurn, matchWinner,
+    syncedBoard, syncedTurn, matchWinner, hideQuestionFromPlayers,
     syncedTeam1Rounds, syncedTeam2Rounds,
   } = useRoomStore();
   
@@ -107,6 +107,19 @@ export const GamePlayer: React.FC = () => {
   useEffect(() => {
     if (answerRevealed && awardedTeam === team && team !== 'none') playWin();
   }, [answerRevealed, awardedTeam, team, playWin]);
+
+  // Response Timer (15s) once someone buzzes
+  const prevBuzzId = useRef<string | null>(null);
+  useEffect(() => {
+    const firstBuzz = buzzQueue[0];
+    if (firstBuzz && firstBuzz.playerId !== prevBuzzId.current) {
+      prevBuzzId.current = firstBuzz.playerId;
+      // Reset timer to 15 seconds for the response
+      setTimeLeft(15);
+    } else if (!firstBuzz) {
+      prevBuzzId.current = null;
+    }
+  }, [buzzQueue]);
 
   const handleBuzz = async () => {
     if (!questionActive || buzzed || buzzedRef.current) return;
@@ -329,12 +342,6 @@ export const GamePlayer: React.FC = () => {
               </div>
             )}
             
-            <div style={{ maxHeight: '35vh', overflowY: 'auto', marginBottom: '25px', padding: '0 5px' }}>
-              <p style={{ fontSize: '1.3rem', fontWeight: '900', color: 'var(--text-primary)', lineHeight: 1.5, margin: 0 }}>
-                {currentQuestion.question}
-              </p>
-            </div>
-
             {/* In-Modal Buzz Status */}
             {firstBuzz ? (
               <div style={{ marginBottom: '20px', animation: 'fadeIn 0.3s' }}>
@@ -353,6 +360,18 @@ export const GamePlayer: React.FC = () => {
             ) : isSyncing ? (
               <div style={{ marginBottom: '20px', color: '#ffb400', fontSize: '0.9rem', fontWeight: '900', animation: 'pulse 1s infinite' }}>جاري المزامنة...</div>
             ) : null}
+
+            <div style={{ maxHeight: '35vh', overflowY: 'auto', marginBottom: '25px', padding: '0 5px' }}>
+              <p style={{ 
+                fontSize: '1.4rem', fontWeight: '900', color: 'var(--text-primary)', lineHeight: 1.5, margin: 0,
+                fontStyle: (hideQuestionFromPlayers && !firstBuzz) ? 'italic' : 'normal',
+                opacity: (hideQuestionFromPlayers && !firstBuzz) ? 0.6 : 1
+              }}>
+                {hideQuestionFromPlayers && !firstBuzz 
+                  ? 'المشرف يقرأ السؤال الآن... استعد للضغط!' 
+                  : currentQuestion.question}
+              </p>
+            </div>
 
             {!answerRevealed ? (
               SharedBuzzButton
