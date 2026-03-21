@@ -42,6 +42,16 @@ export const Game: React.FC = () => {
     }
     prevPlayersCount.current = players.length;
   }, [players]);
+
+  // Arabic TTS for buzzers
+  useEffect(() => {
+    if (buzzQueue.length === 1 && !!activeHexId) {
+      const teamLabel = buzzQueue[0].team === 'team1' ? 'الفريق الأحمر' : 'الفريق الأخضر';
+      const utterance = new SpeechSynthesisUtterance(teamLabel);
+      utterance.lang = 'ar-SA';
+      window.speechSynthesis.speak(utterance);
+    }
+  }, [buzzQueue, activeHexId]);
   const [scale, setScale] = useState(1);
   const [isLandscape, setIsLandscape] = useState(false);
 
@@ -85,11 +95,12 @@ export const Game: React.FC = () => {
     }
   }, [activeHexId, activeQuestion, board]);
 
-  const executeAction = () => {
+  const executeAction = async () => {
     if (showWarningDialog === 'reset') {
+      await broadcastGameState({ gamePhase: 'lobby', board: [], currentTurn: 'team1', team1RoundsWon: 0, team2RoundsWon: 0, winner: null, matchWinner: null });
       resetGame();
-      broadcastGameState({ questionActive: false, currentQuestion: null });
     } else if (showWarningDialog === 'home') {
+      await broadcastGameState({ gamePhase: 'lobby' });
       resetGame();
       navigate('/');
     }

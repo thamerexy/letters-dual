@@ -31,12 +31,6 @@ export const GamePlayer: React.FC = () => {
   const teamColor = team === 'team1' ? '#ff416c' : '#00b09b';
   const teamLabel = team === 'team1' ? 'الفريق الأحمر' : 'الفريق الأخضر';
 
-  // Board geometry constants
-  const hexH = hexSize * 0.866 * 1.05; // Added slight spacing multiplier
-  const boardW = (4 * 0.75 + 1) * hexSize;
-  const boardH = 5.5 * hexH;
-  const borderThick = Math.max(14, hexSize * 0.22);
-
   // Responsive hex sizing
   const calcHexSize = useCallback(() => {
     const ww = window.innerWidth;
@@ -46,7 +40,7 @@ export const GamePlayer: React.FC = () => {
 
     if (landscape) {
       const availW = ww * 0.58 - 20;
-      const availH = wh - 65 - 20; // Room for header
+      const availH = wh - 65 - 20;
       const fromW = availW / 4.2;
       const fromH = availH / (5.6 * 0.866);
       setHexSize(Math.max(30, Math.floor(Math.min(fromW, fromH))));
@@ -71,7 +65,9 @@ export const GamePlayer: React.FC = () => {
   }, [questionActive, currentQuestion]);
 
   useEffect(() => {
-    if (gamePhase === 'finished' || gamePhase === 'lobby') navigate('/');
+    if (gamePhase === 'finished' || gamePhase === 'lobby') {
+      navigate('/');
+    }
   }, [gamePhase, navigate]);
 
   useEffect(() => {
@@ -91,7 +87,14 @@ export const GamePlayer: React.FC = () => {
   };
 
   const firstBuzz = buzzQueue[0];
+  const isFirstBuzz = firstBuzz?.playerId === clientId;
   const myBuzzRank = buzzQueue.findIndex(b => b.playerId === clientId);
+
+  const hexSizeFactor = isLandscape ? 1.08 : 1.05;
+  const hexH = hexSize * 0.866 * hexSizeFactor;
+  const boardW = (4 * 0.75 + 1) * hexSize;
+  const boardH = 5.5 * hexH;
+  const borderThick = Math.max(14, hexSize * 0.22);
 
   // ───── Board Render ─────
   const BoardSection = (
@@ -102,13 +105,11 @@ export const GamePlayer: React.FC = () => {
         boxShadow: '0 20px 50px rgba(0,0,0,0.8), inset 0 0 20px rgba(255,255,255,0.05)',
         border: '1px solid rgba(255,255,255,0.08)' 
       }}>
-        {/* Borders */}
         <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: borderThick, background: 'linear-gradient(to bottom, #ff3b6c, #ff1b00)', zIndex: 2, boxShadow: '5px 0 15px rgba(255,0,0,0.3)' }} />
         <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: borderThick, background: 'linear-gradient(to bottom, #ff3b6c, #ff1b00)', zIndex: 2, boxShadow: '-5px 0 15px rgba(255,0,0,0.3)' }} />
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: borderThick, background: 'linear-gradient(to right, #00b09b, #3d9646)', zIndex: 2, boxShadow: '0 5px 15px rgba(0,255,100,0.2)' }} />
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: borderThick, background: 'linear-gradient(to right, #00b09b, #3d9646)', zIndex: 2, boxShadow: '0 -5px 15px rgba(0,255,100,0.2)' }} />
         
-        {/* Hex grid */}
         <div style={{ position: 'absolute', left: borderThick, top: borderThick, width: boardW, height: boardH, background: 'rgba(10,10,18,0.95)', zIndex: 1 }}>
           {syncedBoard.map(hex => {
             const isTeam1 = hex.owner === 'team1';
@@ -198,7 +199,7 @@ export const GamePlayer: React.FC = () => {
             boxShadow: `0 0 20px ${firstBuzz.team === 'team1' ? 'rgba(255,65,108,0.2)' : 'rgba(0,176,155,0.2)'}`
           }}>
             <Zap size={18} fill="currentColor" />
-            {firstBuzz.playerId === clientId ? 'أنت ضغطت أولاً!' : `${firstBuzz.playerName} ضغط أولاً!`}
+            {isFirstBuzz ? 'أنت ضغطت أولاً!' : `${firstBuzz.playerName} ضغط أولاً!`}
           </div>
           {myBuzzRank > 0 && (
             <div style={{ marginTop: '6px', fontSize: '0.8rem', color: '#555', fontWeight: '700' }}>أنت في المرتبة #{myBuzzRank + 1}</div>
@@ -239,7 +240,6 @@ export const GamePlayer: React.FC = () => {
       color: 'white', fontFamily: "'Cairo', sans-serif", direction: 'rtl',
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
     }}>
-      {/* ── Header ── */}
       <div style={{
         padding: '10px 16px', flexShrink: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -261,7 +261,6 @@ export const GamePlayer: React.FC = () => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* Wake Lock Toggle */}
           <button 
             onClick={toggleWakeLock}
             style={{ 
@@ -270,13 +269,11 @@ export const GamePlayer: React.FC = () => {
               borderRadius: '8px', padding: '6px 8px', color: wakeLockActive ? '#ffd200' : '#666',
               cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', transition: 'all 0.3s'
             }}
-            title={wakeLockActive ? "الشاشة ستظل تعمل" : "تشغيل منع إغلاق الشاشة"}
           >
             {wakeLockActive ? <Sun size={14} fill="currentColor" /> : <Moon size={14} />}
             <span style={{ fontSize: '0.7rem', fontWeight: '700' }}>Stay Awake</span>
           </button>
 
-          {/* Room code */}
           <div style={{ background: 'rgba(255,107,107,0.1)', border: '1px solid rgba(255,107,107,0.25)', borderRadius: '10px', padding: '4px 14px', textAlign: 'center', minWidth: '80px', boxShadow: 'inset 0 0 10px rgba(255,65,108,0.05)' }}>
             <div style={{ fontSize: '0.55rem', color: '#ff6b6b', letterSpacing: '1px', fontWeight: '800' }}>ROOM</div>
             <div style={{ fontSize: '1.2rem', fontWeight: '950', letterSpacing: '4px', color: '#ff6b6b', lineHeight: 1.1 }}>{roomCode}</div>
@@ -284,7 +281,6 @@ export const GamePlayer: React.FC = () => {
         </div>
       </div>
 
-      {/* ── Main Content ── */}
       {isLandscape ? (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px', padding: '12px 20px', overflow: 'hidden' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, animation: 'fadeInScale 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}>
