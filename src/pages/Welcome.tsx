@@ -100,14 +100,22 @@ export const Welcome: React.FC = () => {
       color: 'var(--text-primary)', padding: '20px', overflow: 'hidden',
       fontFamily: "'Cairo', sans-serif", direction: 'rtl',
     }}>
+      {/* SVG Filter for Background Removal */}
+      <svg width="0" height="0" style={{ position: 'absolute' }}>
+        <filter id="remove-black">
+          {/* This filter makes pixels with 0 luminance (black) transparent */}
+          <feColorMatrix type="matrix" values="1 0 0 0 0
+                                               0 1 0 0 0
+                                               0 0 1 0 0
+                                               1 1 1 0 -0.1" />
+        </filter>
+      </svg>
+
       {/* Logo */}
-      <div style={{ 
-        marginBottom: '28px', animation: 'fadeInDown 0.8s ease-out',
-        filter: 'drop-shadow(0 15px 35px rgba(0, 176, 155, 0.35))'
-      }}>
+      <div style={{ marginBottom: '28px', animation: 'fadeInDown 0.8s ease-out' }}>
         <img src="./logo.png" alt="الحروف ثنائية" style={{
-          width: '160px', height: 'auto', objectFit: 'contain',
-          clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
+          width: '220px', height: 'auto', objectFit: 'contain',
+          filter: 'url(#remove-black)',
           display: 'block'
         }} />
       </div>
