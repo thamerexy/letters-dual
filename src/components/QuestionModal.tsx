@@ -52,12 +52,12 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
 
   const content = (
     <div style={{
-      background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,240,240,0.9) 100%)',
-      padding: 'clamp(10px, 3vh, 30px) clamp(15px, 4vw, 30px)',
-      borderRadius: 'clamp(12px, 3vh, 24px)',
-      maxWidth: '90%',
-      width: '520px',
-      maxHeight: '90vh',
+      background: 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(245,245,245,0.95) 100%)',
+      padding: 'clamp(12px, 2.5vh, 20px) 20px',
+      borderRadius: '20px',
+      maxWidth: '92%',
+      width: '480px',
+      maxHeight: '85vh',
       overflowY: 'auto',
       display: 'flex',
       flexDirection: 'column',
@@ -68,7 +68,7 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
       border: '1px solid rgba(255,255,255,0.5)',
       animation: 'slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
     }}>
-      <h2 style={{ fontSize: 'clamp(1.5rem, 5vh, 2.5rem)', margin: '0 0 clamp(5px, 1.5vh, 10px)', color: '#111', textShadow: '0px 2px 4px rgba(0,0,0,0.1)' }}>
+      <h2 style={{ fontSize: 'clamp(1.4rem, 4.5vh, 2rem)', margin: '0 0 8px', color: '#111' }}>
         حرف <span style={{ color: '#00b09b' }}>{letter}</span>
       </h2>
 
@@ -85,7 +85,7 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
           <Zap size={16} color={firstBuzz.team === 'team1' ? '#ff416c' : '#00b09b'} />
           <span style={{
             fontFamily: "'Cairo', sans-serif",
-            fontWeight: '800', fontSize: 'clamp(0.85rem, 2.5vh, 1.1rem)',
+            fontWeight: '800', fontSize: 'clamp(0.8rem, 2vh, 1rem)',
             color: firstBuzz.team === 'team1' ? '#cc2244' : '#007a6a',
           }}>
             ⚡ {firstBuzz.playerName} ضغط أولاً!
@@ -111,7 +111,7 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
         </div>
       )}
 
-      <p style={{ fontSize: 'clamp(1.1rem, 4.5vh, 1.6rem)', fontWeight: '800', margin: 'clamp(5px, 2vh, 15px) 0 clamp(10px, 3.5vh, 25px)', color: '#333' }}>
+      <p style={{ fontSize: 'clamp(1rem, 4vh, 1.4rem)', fontWeight: '800', margin: '10px 0 20px', color: '#333' }}>
         {question}
       </p>
 

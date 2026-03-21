@@ -227,40 +227,40 @@ export const Game: React.FC = () => {
           )}
 
           {/* Turn */}
-          <div style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '15px', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', fontFamily: "'Cairo', sans-serif" }}>
-            <span style={{ color: '#ccc', fontSize: '1.4rem', marginBottom: '5px' }}>دور من لاختيار الحرف؟</span>
-            <span style={{ color: currentTurn === 'team1' ? '#ff416c' : '#00b09b', fontSize: '1.8rem', fontWeight: 'bold' }}>
+          <div style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '15px', padding: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', fontFamily: "'Cairo', sans-serif" }}>
+            <span style={{ color: '#ccc', fontSize: '1rem', marginBottom: '2px' }}>دور من لاختيار الحرف؟</span>
+            <span style={{ color: currentTurn === 'team1' ? '#ff416c' : '#00b09b', fontSize: '1.4rem', fontWeight: 'bold' }}>
               {currentTurn === 'team1' ? 'دور الفريق الأحمر' : 'دور الفريق الأخضر'}
             </span>
           </div>
 
-          {/* Scoreboard */}
-          <div style={{ display: 'flex', fontFamily: "'Cairo', sans-serif", width: '100%', height: '80px', borderRadius: '15px', overflow: 'hidden', boxShadow: '0 10px 20px rgba(0,0,0,0.3)', position: 'relative' }}>
+          {/* Scoreboard (Smaller) */}
+          <div style={{ display: 'flex', fontFamily: "'Cairo', sans-serif", width: '100%', height: '64px', borderRadius: '15px', overflow: 'hidden', boxShadow: '0 10px 20px rgba(0,0,0,0.3)', position: 'relative' }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10 }}>
-              <span style={{ background: '#333', padding: '2px 10px', borderRadius: '0 0 10px 10px', fontSize: '0.8rem', border: '1px solid #555', borderTop: 'none', color: 'white' }}>المطلوب {requiredRoundsToWin}</span>
+              <span style={{ background: '#333', padding: '1px 8px', borderRadius: '0 0 8px 8px', fontSize: '0.7rem', border: '1px solid #555', borderTop: 'none', color: 'white' }}>المطلوب {requiredRoundsToWin}</span>
             </div>
             <div style={{ flex: 1, background: '#ff3333', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-              <span style={{ fontSize: '1rem', fontWeight: 'bold' }}>الفريق الأحمر</span>
-              <span style={{ fontSize: '1.8rem', fontWeight: '900' }}>{team1RoundsWon}</span>
+              <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>الفريق الأحمر</span>
+              <span style={{ fontSize: '1.5rem', fontWeight: '900' }}>{team1RoundsWon}</span>
             </div>
             <div style={{ flex: 1, background: '#00cc66', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-              <span style={{ fontSize: '1rem', fontWeight: 'bold' }}>الفريق الأخضر</span>
-              <span style={{ fontSize: '1.8rem', fontWeight: '900' }}>{team2RoundsWon}</span>
+              <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>الفريق الأخضر</span>
+              <span style={{ fontSize: '1.5rem', fontWeight: '900' }}>{team2RoundsWon}</span>
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div style={{ display: 'flex', gap: '10px', direction: 'rtl', width: '100%' }}>
+          {/* Action Buttons (More Compact) */}
+          <div style={{ display: 'flex', gap: '8px', direction: 'rtl', width: '100%' }}>
             {[
-              { icon: <RotateCcw size={16} />, label: 'إعادة', onClick: () => setShowWarningDialog('reset') },
-              { icon: <Undo2 size={16} />, label: 'تراجع', onClick: undoLastMove, disabled: !previousBoard },
-              { icon: <Home size={16} />, label: 'الرئيسية', onClick: () => setShowWarningDialog('home') },
+              { icon: <RotateCcw size={14} />, label: 'إعادة', onClick: () => setShowWarningDialog('reset') },
+              { icon: <Undo2 size={14} />, label: 'تراجع', onClick: undoLastMove, disabled: !previousBoard },
+              { icon: <Home size={14} />, label: 'الرئيسية', onClick: () => setShowWarningDialog('home') },
             ].map(({ icon, label, onClick, disabled }) => (
               <button key={label} onClick={onClick} disabled={!!disabled} style={{
-                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                padding: '12px 10px', background: disabled ? '#555' : '#888', border: 'none',
-                borderRadius: '25px', color: disabled ? '#777' : '#222', fontSize: '1rem',
-                fontWeight: 'bold', cursor: disabled ? 'not-allowed' : 'pointer',
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                padding: '10px 8px', background: disabled ? '#444' : 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.05)',
+                borderRadius: '15px', color: disabled ? '#666' : 'white', fontSize: '0.9rem',
+                fontWeight: 'bold', cursor: disabled ? 'not-allowed' : 'pointer', transition: 'all 0.2s'
               }}>
                 {icon}{label}
               </button>
