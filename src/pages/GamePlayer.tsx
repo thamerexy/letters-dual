@@ -108,6 +108,14 @@ export const GamePlayer: React.FC = () => {
     if (answerRevealed && awardedTeam === team && team !== 'none') playWin();
   }, [answerRevealed, awardedTeam, team, playWin]);
 
+  // Sync Buzzer Audio for all players
+  useEffect(() => {
+    if (buzzQueue.length === 1 && questionActive) {
+      if (buzzQueue[0].team === 'team1') playRed();
+      else if (buzzQueue[0].team === 'team2') playGreen();
+    }
+  }, [buzzQueue, questionActive, playRed, playGreen]);
+
   // Response Timer (15s) once someone buzzes
   const prevBuzzId = useRef<string | null>(null);
   useEffect(() => {
@@ -146,19 +154,18 @@ export const GamePlayer: React.FC = () => {
   const hexW = hexSize * hexStretchFactor;
   const boardW = (4 * 0.75 + 1) * hexW;
   const boardH = 5.5 * hexH;
-  const borderThick = Math.max(16, hexSize * 0.28);
 
   const BoardSection = (
     <div style={{ position: 'relative', flexShrink: 0, '--hex-width': `${hexW}px`, '--hex-height': `${hexH}px` } as React.CSSProperties}>
       <div className="game-board" style={{ 
         width: boardW, height: boardH, position: 'relative'
       }}>
-        {/* Background borders - Proportioned to match Board.tsx */}
-        <div style={{ position: 'absolute', top: -borderThick, left: -borderThick, right: -borderThick, bottom: -borderThick, zIndex: 0, borderRadius: '24px', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
-          <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: hexW * 0.44, background: 'linear-gradient(to bottom, #ff416c, #ff4b2b)', boxShadow: '4px 0 10px rgba(255,65,108,0.2)' }} />
-          <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: hexW * 0.44, background: 'linear-gradient(to bottom, #ff416c, #ff4b2b)', boxShadow: '-4px 0 10px rgba(255,65,108,0.2)' }} />
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: hexH * 0.75, background: 'linear-gradient(to right, #00b09b, #96c93d)', boxShadow: '0 4px 10px rgba(0,176,155,0.2)' }} />
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: hexH * 0.75, background: 'linear-gradient(to right, #00b09b, #96c93d)', boxShadow: '0 -4px 10px rgba(0,176,155,0.2)' }} />
+        {/* Background borders - Identical to Board.tsx */}
+        <div style={{ position: 'absolute', top: -15, left: -20, right: -20, bottom: -15, zIndex: 0, borderRadius: '24px', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
+          <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: 35, background: 'linear-gradient(to bottom, #ff416c, #ff4b2b)', boxShadow: '4px 0 10px rgba(255,65,108,0.2)' }} />
+          <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: 35, background: 'linear-gradient(to bottom, #ff416c, #ff4b2b)', boxShadow: '-4px 0 10px rgba(255,65,108,0.2)' }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 60, background: 'linear-gradient(to right, #00b09b, #96c93d)', boxShadow: '0 4px 10px rgba(0,176,155,0.2)' }} />
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 60, background: 'linear-gradient(to right, #00b09b, #96c93d)', boxShadow: '0 -4px 10px rgba(0,176,155,0.2)' }} />
         </div>
         
         {/* Soft Board Background */}
@@ -204,28 +211,41 @@ export const GamePlayer: React.FC = () => {
       color: 'var(--text-primary)', fontFamily: "'Cairo', sans-serif", direction: 'rtl',
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
     }}>
-      {/* ── Fixed Header ── */}
+      {/* ── Fixed Header (Identical to Admin) ── */}
       <div className="glass-panel" style={{
-        padding: '8px 16px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0 16px', height: '56px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         borderBottom: '1px solid var(--glass-border)', zIndex: 100,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: `${teamColor}22`, border: `2px solid ${teamColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', fontWeight: '900', color: teamColor }}>
+        {/* Player Identity Badge */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: `${teamColor}22`, border: `2px solid ${teamColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', fontWeight: '900', color: teamColor, boxShadow: 'var(--shadow-sm)' }}>
             {myName?.[0] ?? '?'}
           </div>
-          <div>
-            <div style={{ fontSize: '0.9rem', fontWeight: '900', lineHeight: 1.1 }}>{myName}</div>
-            <div style={{ fontSize: '0.65rem', color: teamColor, fontWeight: '700' }}>{teamLabel}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+            <div style={{ fontSize: '0.95rem', fontWeight: '900', lineHeight: 1.1, color: 'var(--text-primary)' }}>{myName}</div>
+            <div style={{ fontSize: '0.7rem', color: teamColor, fontWeight: '800' }}>{teamLabel}</div>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button onClick={toggleWakeLock} style={{ background: wakeLockActive ? 'rgba(255,180,0,0.1)' : 'white', border: `1px solid ${wakeLockActive ? '#ffb400' : 'var(--glass-border)'}`, borderRadius: '8px', padding: '4px 10px', color: wakeLockActive ? '#ffb400' : '#888', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.65rem', boxShadow: 'var(--shadow-sm)' }}>
-            {wakeLockActive ? <Sun size={12} fill="currentColor" /> : <Moon size={12} />}
-            <span>Stay Awake</span>
+
+        {/* Status Area */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', direction: 'ltr' }}>
+          <button 
+            onClick={toggleWakeLock} 
+            style={{ 
+              background: wakeLockActive ? 'rgba(255,180,0,0.15)' : 'rgba(255,255,255,0.06)', 
+              border: `1px solid ${wakeLockActive ? 'rgba(255,180,0,0.3)' : 'var(--glass-border)'}`, 
+              borderRadius: '10px', padding: '5px 12px', color: wakeLockActive ? '#ffb400' : '#777', 
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', 
+              transition: 'all 0.3s', fontWeight: '800', fontSize: '0.75rem', boxShadow: 'var(--shadow-sm)' 
+            }}
+          >
+            {wakeLockActive ? <Sun size={14} fill="currentColor" /> : <Moon size={14} />}
+            <span style={{ display: isLandscape ? 'inline' : 'none' }}>Stay Awake</span>
           </button>
-          <div style={{ background: 'white', border: '1px solid #ff6b6b44', borderRadius: '8px', padding: '2px 10px', textAlign: 'center', boxShadow: 'var(--shadow-sm)' }}>
-            <div style={{ fontSize: '0.45rem', color: '#ff6b6b', fontWeight: '800' }}>ROOM</div>
-            <div style={{ fontSize: '1rem', fontWeight: '950', letterSpacing: '3px', color: '#ff6b6b', lineHeight: 1 }}>{roomCode}</div>
+          
+          <div style={{ background: 'white', border: '1px solid #ff6b6b33', borderRadius: '10px', padding: '2px 10px', textAlign: 'center', boxShadow: '0 2px 6px rgba(255,65,108,0.08)' }}>
+            <div style={{ fontSize: '0.45rem', color: '#ff6b6b', letterSpacing: '0.5px', fontWeight: '800', lineHeight: 1 }}>ROOM</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: '950', letterSpacing: '2px', color: '#ff6b6b', lineHeight: 1 }}>{roomCode}</div>
           </div>
         </div>
       </div>
@@ -240,49 +260,56 @@ export const GamePlayer: React.FC = () => {
           justifyContent: isLandscape ? 'flex-start' : 'center', minWidth: 0,
           maxWidth: isLandscape ? '450px' : 'none',
         }}>
-          {/* Row 1: 3 Boxes */}
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <div className="glass-panel" style={{ flex: 1, padding: '8px', textAlign: 'center', borderRadius: '12px' }}>
-              <div style={{ fontSize: '0.55rem', color: 'var(--text-secondary)', fontWeight: '800' }}>الغرفة</div>
-              <div style={{ fontSize: '1rem', fontWeight: '950', color: '#ff6b6b' }}>{roomCode}</div>
-            </div>
-            <div className="glass-panel" style={{ flex: 1, padding: '8px', textAlign: 'center', borderRadius: '12px' }}>
-              <div style={{ fontSize: '0.55rem', color: 'var(--text-secondary)', fontWeight: '800' }}>الاسم</div>
-              <div style={{ fontSize: '0.9rem', fontWeight: '950', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{myName}</div>
-            </div>
-            <button onClick={toggleWakeLock} className="glass-panel" style={{ flex: 1, padding: '8px', textAlign: 'center', borderRadius: '12px', border: wakeLockActive ? '1px solid #ffb40066' : '1px solid var(--glass-border)' }}>
-              <div style={{ fontSize: '0.55rem', color: wakeLockActive ? '#ffb400' : 'var(--text-secondary)', fontWeight: '800' }}>التنبيه</div>
-              <div style={{ fontSize: '0.85rem', fontWeight: '950', color: wakeLockActive ? '#ffb400' : '#888' }}>{wakeLockActive ? 'ON' : 'OFF'}</div>
-            </button>
-          </div>
-
-          {/* Row 2: Score Bar (Red/Green Split) */}
-          <div style={{ display: 'flex', height: '48px', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-sm)' }}>
-            <div style={{ flex: 1, background: 'linear-gradient(135deg, #ff416c, #ff4b2b)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '950', fontSize: '1.4rem' }}>
-              {syncedTeam1Rounds}
-              <span style={{ fontSize: '0.65rem', marginRight: '6px', opacity: 0.9 }}>أحمر</span>
-            </div>
-            <div style={{ flex: 1, background: 'linear-gradient(135deg, #00b09b, #96c93d)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '950', fontSize: '1.4rem' }}>
-              {syncedTeam2Rounds}
-              <span style={{ fontSize: '0.65rem', marginRight: '6px', opacity: 0.9 }}>أخضر</span>
-            </div>
-          </div>
-
-          {/* Row 3: 3 Boxes (Turn, Letter, Timer) */}
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <div className="glass-panel" style={{ flex: 1, padding: '8px', textAlign: 'center', borderRadius: '12px' }}>
-              <div style={{ fontSize: '0.55rem', color: 'var(--text-secondary)', fontWeight: '800' }}>الدور</div>
-              <div style={{ fontSize: '0.8rem', fontWeight: '950', color: syncedTurn === 'team1' ? '#ff416c' : '#00b09b' }}>{syncedTurn === 'team1' ? 'أحمر' : 'أخضر'}</div>
-            </div>
-            <div className="glass-panel" style={{ flex: 1, padding: '8px', textAlign: 'center', borderRadius: '12px' }}>
-              <div style={{ fontSize: '0.55rem', color: 'var(--text-secondary)', fontWeight: '800' }}>الحرف</div>
-              <div style={{ fontSize: '1.1rem', fontWeight: '950' }}>{currentQuestion?.letter ?? '-'}</div>
-            </div>
-            <div className="glass-panel" style={{ flex: 1, padding: '8px', textAlign: 'center', borderRadius: '12px', background: timeLeft <= 5 && questionActive ? 'rgba(255,65,108,0.05)' : 'white' }}>
-              <div style={{ fontSize: '0.55rem', color: 'var(--text-secondary)', fontWeight: '800' }}>الوقت</div>
-              <div style={{ fontSize: '1.1rem', fontWeight: '950', color: timeLeft <= 5 && questionActive ? '#ff416c' : '#2d3436' }}>
-                {questionActive ? timeLeft : '-'}
+          {/* Buzz Monitor (Identical to Admin) */}
+          {buzzQueue.length > 0 && (
+            <div style={{
+              width: '100%', background: 'rgba(247,151,30,0.1)',
+              border: '1px solid rgba(247,151,30,0.4)', borderRadius: '15px',
+              padding: '14px 16px', fontFamily: "'Cairo', sans-serif",
+              animation: 'fadeIn 0.3s ease-out'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', color: '#f7971e', fontWeight: '800', fontSize: '1rem' }}>
+                <Zap size={18} /> ترتيب الضغط
               </div>
+              {buzzQueue.map((buzz, i) => (
+                <div key={buzz.playerId} style={{
+                  display: 'flex', alignItems: 'center', gap: '10px',
+                  padding: '8px 10px', marginBottom: '6px',
+                  background: i === 0 ? 'rgba(247,151,30,0.2)' : 'rgba(255,255,255,0.04)',
+                  borderRadius: '10px',
+                  border: i === 0 ? '1px solid rgba(247,151,30,0.5)' : '1px solid transparent',
+                }}>
+                  <span style={{ fontWeight: '900', color: i === 0 ? '#ffd200' : '#666', fontSize: '1.1rem', width: '22px' }}>
+                    {i === 0 ? '⚡' : `${i + 1}.`}
+                  </span>
+                  <span style={{ color: buzz.team === 'team1' ? '#ff6b6b' : '#00d4b4', fontWeight: '700', fontSize: '1rem', flex: 1 }}>
+                    {buzz.playerName}
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: '#555' }}>
+                    {buzz.team === 'team1' ? 'أحمر' : 'أخضر'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Turn Indicator (Identical to Admin) */}
+          <div className="glass-panel" style={{ width: '100%', borderRadius: '15px', padding: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '2px', fontWeight: '700' }}>دور من لاختيار الحرف؟</span>
+            <span style={{ color: syncedTurn === 'team1' ? '#ff416c' : '#00b09b', fontSize: '1.4rem', fontWeight: '950' }}>
+              {syncedTurn === 'team1' ? 'دور الفريق الأحمر' : 'دور الفريق الأخضر'}
+            </span>
+          </div>
+
+          {/* Scoreboard (Identical to Admin) */}
+          <div style={{ display: 'flex', width: '100%', height: '64px', borderRadius: '15px', overflow: 'hidden', boxShadow: 'var(--shadow-lg)', position: 'relative', border: '1px solid var(--glass-border)' }}>
+            <div style={{ flex: 1, background: 'linear-gradient(135deg, #ff416c, #ff4b2b)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>أحمر</span>
+              <span style={{ fontSize: '1.6rem', fontWeight: '950' }}>{syncedTeam1Rounds}</span>
+            </div>
+            <div style={{ flex: 1, background: 'linear-gradient(135deg, #00b09b, #96c93d)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>أخضر</span>
+              <span style={{ fontSize: '1.6rem', fontWeight: '950' }}>{syncedTeam2Rounds}</span>
             </div>
           </div>
           
@@ -319,9 +346,10 @@ export const GamePlayer: React.FC = () => {
           padding: '15px', zIndex: 1000, animation: 'fadeIn 0.2s'
         }}>
           <div className="glass-panel" style={{
-            background: 'white', borderRadius: '32px',
-            padding: '24px', width: '100%', maxWidth: '440px', textAlign: 'center',
-            boxShadow: 'var(--shadow-lg)', animation: 'popUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+            background: 'white', borderRadius: '24px',
+            padding: 'clamp(12px, 2.5vh, 24px) 24px', width: '100%', maxWidth: '480px', textAlign: 'center',
+            boxShadow: 'var(--shadow-lg)', animation: 'popUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+            maxHeight: '90vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', color: 'var(--text-primary)'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '8px' }}>
               <div style={{ width: '38px', height: '38px', background: 'var(--team2-light)', border: '1px solid var(--team2)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--team2)', fontSize: '1.2rem', fontWeight: '900' }}>
@@ -330,15 +358,21 @@ export const GamePlayer: React.FC = () => {
               <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: '800' }}>سؤال الحرف</div>
             </div>
 
-            {/* Timer for Player */}
+            {/* Timer Bar (Identical to Admin) */}
             {!buzzed && !answerRevealed && (
-              <div style={{ width: '100%', height: '6px', background: '#f1f3f5', borderRadius: '10px', overflow: 'hidden', margin: '10px 0 20px', border: '1px solid rgba(0,0,0,0.03)' }}>
-                <div style={{
-                  height: '100%',
-                  width: `${(timeLeft / 20) * 100}%`,
-                  background: timeLeft <= 5 ? 'var(--team1)' : 'var(--team2)',
-                  transition: 'width 1s linear'
-                }} />
+              <div style={{ padding: '0 5px', marginBottom: 'clamp(5px, 1.5vh, 12px)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: "'Cairo', sans-serif", fontSize: '0.9rem', fontWeight: '900', color: timeLeft <= 5 ? '#ff416c' : 'var(--text-secondary)', transition: 'color 0.3s' }}>
+                  <span>{timeLeft}s</span>
+                  <span>الزمن المتبقي</span>
+                </div>
+                <div style={{ width: '100%', height: '8px', background: '#f1f3f5', borderRadius: '10px', overflow: 'hidden', marginTop: '5px', border: '1px solid rgba(0,0,0,0.03)' }}>
+                  <div style={{
+                    height: '100%',
+                    width: `${(timeLeft / 20) * 100}%`,
+                    background: timeLeft <= 5 ? 'linear-gradient(90deg, #ff416c, #ff4b2b)' : 'linear-gradient(90deg, #00b09b, #96c93d)',
+                    transition: 'width 1s linear, background 0.3s ease'
+                  }} />
+                </div>
               </div>
             )}
             
