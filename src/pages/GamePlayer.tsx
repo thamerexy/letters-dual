@@ -24,6 +24,7 @@ export const GamePlayer: React.FC = () => {
   const [buzzed, setBuzzed] = useState(false);
   const [buzzerScale, setBuzzerScale] = useState(1);
   const [isLandscape, setIsLandscape] = useState(false);
+  const [boardScale, setBoardScale] = useState(0.85);
   const [timeLeft, setTimeLeft] = useState(20);
   const buzzedRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -33,7 +34,24 @@ export const GamePlayer: React.FC = () => {
   const teamLabel = team === 'team1' ? 'الفريق الأحمر' : team === 'team2' ? 'الفريق الأخضر' : 'بدون فريق';
 
   useEffect(() => {
-    const handleResize = () => setIsLandscape(window.innerWidth > window.innerHeight);
+    const handleResize = () => {
+      const ww = window.innerWidth;
+      const wh = window.innerHeight;
+      const landscape = ww > wh;
+      setIsLandscape(landscape);
+
+      // Dynamic board scaling
+      const headerHeight = 56;
+      const verticalPadding = 30;
+      const availableH = wh - headerHeight - verticalPadding;
+      const boardNaturalH = 381; // 5.5 * 69.28
+      
+      const newScale = landscape 
+        ? Math.min(0.95, availableH / boardNaturalH)
+        : 0.85; // Standard portrait scale
+        
+      setBoardScale(newScale);
+    };
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -128,7 +146,7 @@ export const GamePlayer: React.FC = () => {
   const isSyncing = buzzed && !buzzQueue.some(b => b.playerId === clientId);
 
   const BoardSection = (
-    <div style={{ transform: `scale(${isLandscape ? 0.92 : 0.85})`, transformOrigin: 'center center' }}>
+    <div style={{ transform: `scale(${boardScale})`, transformOrigin: 'center center' }}>
       <Board 
         isPlayerView 
         syncedBoard={syncedBoard} 
