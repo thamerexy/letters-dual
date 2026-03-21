@@ -130,34 +130,53 @@ export const Game: React.FC = () => {
       background: 'radial-gradient(circle at 10% 20%, rgb(30,30,30) 0%, rgb(15,15,15) 100%)',
       overflow: 'hidden',
     }}>
-
-      {/* Room code badge — always visible */}
-      <div style={{ position: 'absolute', top: '12px', right: '14px', zIndex: 100, display: 'flex', gap: '10px', alignItems: 'center' }}>
-        
-        {/* Wake Lock Toggle */}
-        <button 
-          onClick={toggleWakeLock}
-          style={{ 
-            background: wakeLockActive ? 'rgba(255,210,0,0.15)' : 'rgba(0,0,0,0.6)', 
-            border: `1px solid ${wakeLockActive ? 'rgba(255,210,0,0.3)' : 'rgba(255,255,255,0.1)'}`,
-            borderRadius: '10px', padding: '6px 10px', color: wakeLockActive ? '#ffd200' : '#888',
-            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: "'Cairo', sans-serif"
-          }}
-        >
-          {wakeLockActive ? <Sun size={15} fill="currentColor" /> : <Moon size={15} />}
-          <span style={{ fontSize: '0.75rem', fontWeight: '800' }}>Stay Awake</span>
+      {/* ── Fixed Header (Fixes Overlap) ── */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, height: '64px',
+        padding: '0 20px', zIndex: 1000,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(15px)',
+        borderBottom: '1px solid rgba(255,255,255,0.1)',
+        direction: 'rtl', fontFamily: "'Cairo', sans-serif"
+      }}>
+        {/* Left: Players Button */}
+        <button onClick={() => setShowPlayerPanel(true)} style={{ 
+          background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', 
+          borderRadius: '10px', padding: '8px 16px', color: 'white', cursor: 'pointer', 
+          display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1rem', fontWeight: '800',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.2)' 
+        }}>
+          <Users size={20} />
+          اللاعبون <span style={{ background: 'rgba(255,255,255,0.15)', padding: '1px 8px', borderRadius: '5px', fontSize: '0.85rem', marginRight: '4px' }}>{players.length}</span>
         </button>
 
-        <div style={{ background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,107,107,0.3)', backdropFilter: 'blur(10px)', borderRadius: '12px', padding: '4px 14px', textAlign: 'center', direction: 'ltr', boxShadow: '0 4px 15px rgba(255,107,107,0.1)' }}>
-          <div style={{ fontSize: '0.55rem', color: '#ff6b6b', letterSpacing: '1px', fontWeight: '800' }}>ROOM</div>
-          <div style={{ fontSize: '1.2rem', fontWeight: '950', letterSpacing: '5px', color: '#ff6b6b' }}>{roomCode}</div>
+        {/* Right: Badges */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', direction: 'ltr' }}>
+          <button 
+            onClick={toggleWakeLock}
+            style={{ 
+              background: wakeLockActive ? 'rgba(255,180,0,0.2)' : 'rgba(255,255,255,0.06)', 
+              border: `1px solid ${wakeLockActive ? 'rgba(255,180,0,0.4)' : 'rgba(255,255,255,0.12)'}`,
+              borderRadius: '10px', padding: '6px 14px', color: wakeLockActive ? '#ffb400' : '#888',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.3s',
+              fontWeight: '800', fontSize: '0.8rem'
+            }}
+          >
+            {wakeLockActive ? <Sun size={16} fill="currentColor" /> : <Moon size={16} />}
+            <span>Stay Awake</span>
+          </button>
+
+          <div style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,107,107,0.4)', borderRadius: '12px', padding: '4px 16px', textAlign: 'center', boxShadow: 'inset 0 0 10px rgba(255,65,108,0.1)' }}>
+            <div style={{ fontSize: '0.55rem', color: '#ff6b6b', letterSpacing: '1px', fontWeight: '800' }}>ROOM</div>
+            <div style={{ fontSize: '1.3rem', fontWeight: '950', letterSpacing: '5px', color: '#ff6b6b', lineHeight: 1.1 }}>{roomCode}</div>
+          </div>
         </div>
       </div>
 
       {/* Join Notification Toast */}
       {joinNotification && (
         <div style={{ 
-          position: 'absolute', top: '70px', left: '50%', transform: 'translateX(-50%)', 
+          position: 'absolute', top: '75px', left: '50%', transform: 'translateX(-50%)', 
           zIndex: 200, background: 'rgba(50,55,70,0.95)', border: '1px solid #77aaff33',
           padding: '12px 24px', borderRadius: '40px', color: 'white', fontWeight: '900',
           boxShadow: '0 10px 30px rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', gap: '12px',
@@ -168,16 +187,11 @@ export const Game: React.FC = () => {
         </div>
       )}
 
-      {/* Mid-game players button */}
-      <button onClick={() => setShowPlayerPanel(true)} style={{ position: 'absolute', top: '12px', left: '14px', zIndex: 50, background: 'rgba(0,0,0,0.65)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)', borderRadius: '10px', padding: '8px 16px', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontFamily: "'Cairo', sans-serif", fontSize: '0.95rem', fontWeight: '800', direction: 'rtl', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
-        <Users size={18} />
-        اللاعبون <span style={{ background: 'rgba(255,255,255,0.15)', padding: '1px 6px', borderRadius: '4px', fontSize: '0.8rem', marginRight: '4px' }}>{players.length}</span>
-      </button>
       <div style={{
         transform: `scale(${scale})`,
         display: 'flex', flexDirection: isLandscape ? 'row' : 'column',
         alignItems: 'center', justifyContent: 'center',
-        gap: '40px', width: '100%', height: '100%',
+        gap: '40px', width: '100%', height: 'calc(100% - 64px)', marginTop: '64px',
       }}>
         {/* Side Panel */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px', width: isLandscape ? '380px' : '100%', flexShrink: 0 }}>
