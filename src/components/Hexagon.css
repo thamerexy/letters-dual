@@ -16,8 +16,8 @@
 
 .hexagon-wrapper {
   position: relative;
-  width: var(--hex-size, 80px);
-  height: calc(var(--hex-size, 80px) * 0.866);
+  width: var(--hex-width, var(--hex-size, 80px));
+  height: var(--hex-height, calc(var(--hex-size, 80px) * 0.866));
   margin: 0;
   filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.06));
   transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.3s;

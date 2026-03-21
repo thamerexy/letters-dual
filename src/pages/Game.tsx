@@ -142,46 +142,46 @@ export const Game: React.FC = () => {
       background: 'var(--bg-main)',
       overflow: 'hidden',
     }}>
-      {/* ── Fixed Header (Fixes Overlap) ── */}
+      {/* ── Fixed Header (Single-line for Portrait) ── */}
       <div className="glass-panel" style={{
         position: 'absolute', top: 0, left: 0, right: 0, 
-        minHeight: '64px', height: isLandscape ? '64px' : 'auto',
-        padding: isLandscape ? '0 20px' : '10px 15px', zIndex: 1000,
+        minHeight: '56px', height: isLandscape ? '56px' : 'auto',
+        padding: isLandscape ? '0 16px' : '0 10px', zIndex: 1000,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        flexWrap: 'wrap', gap: '10px',
+        flexWrap: 'nowrap', gap: '8px',
         borderBottom: '1px solid var(--glass-border)',
         direction: 'rtl', fontFamily: "'Cairo', sans-serif"
       }}>
-        {/* Left: Players Button */}
+        {/* Left: Players Button (More compact) */}
         <button onClick={() => setShowPlayerPanel(true)} style={{ 
           background: 'white', border: '1px solid var(--glass-border)', 
-          borderRadius: '10px', padding: '8px 16px', color: 'var(--text-primary)', cursor: 'pointer', 
-          display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1rem', fontWeight: '800',
-          boxShadow: 'var(--shadow-sm)' 
+          borderRadius: '10px', padding: '6px 10px', color: 'var(--text-primary)', cursor: 'pointer', 
+          display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: '850',
+          boxShadow: 'var(--shadow-sm)', flexShrink: 0
         }}>
-          <Users size={20} />
-          اللاعبون <span style={{ background: 'rgba(0,0,0,0.05)', padding: '1px 8px', borderRadius: '5px', fontSize: '0.85rem', marginRight: '4px' }}>{players.length}</span>
+          <Users size={16} />
+          <span>اللاعبون ({players.length})</span>
         </button>
 
-        {/* Right: Badges */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', direction: 'ltr' }}>
+        {/* Right: Badges (More compact) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', direction: 'ltr', flexShrink: 0 }}>
           <button 
             onClick={toggleWakeLock}
             style={{ 
-              background: wakeLockActive ? 'rgba(255,180,0,0.2)' : 'rgba(255,255,255,0.06)', 
-              border: `1px solid ${wakeLockActive ? 'rgba(255,180,0,0.4)' : 'rgba(255,255,255,0.12)'}`,
-              borderRadius: '10px', padding: '6px 14px', color: wakeLockActive ? '#ffb400' : '#888',
-              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.3s',
-              fontWeight: '800', fontSize: '0.8rem'
+              background: wakeLockActive ? 'rgba(255,180,0,0.15)' : 'rgba(255,255,255,0.06)', 
+              border: `1px solid ${wakeLockActive ? 'rgba(255,180,0,0.3)' : 'var(--glass-border)'}`,
+              borderRadius: '10px', padding: '5px 10px', color: wakeLockActive ? '#ffb400' : '#777',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.3s',
+              fontWeight: '800', fontSize: '0.75rem', boxShadow: 'var(--shadow-sm)'
             }}
           >
-            {wakeLockActive ? <Sun size={16} fill="currentColor" /> : <Moon size={16} />}
-            <span>Stay Awake</span>
+            {wakeLockActive ? <Sun size={14} fill="currentColor" /> : <Moon size={14} />}
+            <span style={{ display: isLandscape ? 'inline' : 'none' }}>Stay Awake</span>
           </button>
 
-          <div style={{ background: 'white', border: '1px solid #ff6b6b44', borderRadius: '12px', padding: '4px 16px', textAlign: 'center', boxShadow: '0 4px 10px rgba(255,65,108,0.1)' }}>
-            <div style={{ fontSize: '0.55rem', color: '#ff6b6b', letterSpacing: '1px', fontWeight: '800' }}>ROOM</div>
-            <div style={{ fontSize: '1.3rem', fontWeight: '950', letterSpacing: '5px', color: '#ff6b6b', lineHeight: 1.1 }}>{roomCode}</div>
+          <div style={{ background: 'white', border: '1px solid #ff6b6b33', borderRadius: '10px', padding: '2px 10px', textAlign: 'center', boxShadow: '0 2px 6px rgba(255,65,108,0.08)' }}>
+            <div style={{ fontSize: '0.45rem', color: '#ff6b6b', letterSpacing: '0.5px', fontWeight: '800', lineHeight: 1 }}>ROOM</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: '950', letterSpacing: '2px', color: '#ff6b6b', lineHeight: 1 }}>{roomCode}</div>
           </div>
         </div>
       </div>

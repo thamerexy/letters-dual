@@ -40,18 +40,20 @@ export const GamePlayer: React.FC = () => {
     const landscape = ww > wh;
     setIsLandscape(landscape);
 
-    const headerHeight = 60;
     const padding = 15;
+    const headerHeight = 56;
 
     if (landscape) {
-      const availW = ww * 0.75 - padding * 2;
+      // Board takes 50% width
+      const availW = ww * 0.5 - padding * 2;
       const availH = wh - headerHeight - padding * 2;
       const fromW = availW / 4.2;
       const fromH = availH / (5.6 * 0.866);
       setHexSize(Math.max(34, Math.floor(Math.min(fromW, fromH))));
     } else {
+      // Portrait Board at bottom
       const availW = ww - padding * 2;
-      const availH = wh * 0.45 - padding;
+      const availH = wh * 0.4 - padding;
       const fromW = availW / 4.2;
       const fromH = availH / (5.6 * 0.866);
       setHexSize(Math.max(32, Math.floor(Math.min(fromW, fromH))));
@@ -106,28 +108,32 @@ export const GamePlayer: React.FC = () => {
   const firstBuzz = buzzQueue[0];
   const isSyncing = buzzed && !buzzQueue.some(b => b.playerId === clientId);
 
-  const hexSizeFactor = isLandscape ? 1.08 : 1.05;
-  const hexH = hexSize * 0.866 * hexSizeFactor;
-  const boardW = (4 * 0.75 + 1) * hexSize;
+  const hexStretchFactor = isLandscape ? 1.35 : 1.05;
+  const hexH = hexSize * 0.866;
+  const hexW = hexSize * hexStretchFactor;
+  const boardW = (4 * 0.75 + 1) * hexW;
   const boardH = 5.5 * hexH;
   const borderThick = Math.max(16, hexSize * 0.28);
 
   const BoardSection = (
-    <div style={{ position: 'relative', flexShrink: 0, '--hex-size': `${hexSize}px` } as React.CSSProperties}>
+    <div style={{ position: 'relative', flexShrink: 0, '--hex-width': `${hexW}px`, '--hex-height': `${hexH}px` } as React.CSSProperties}>
       <div className="game-board" style={{ 
         width: boardW, height: boardH, position: 'relative'
       }}>
         {/* Background borders - Proportioned to match Board.tsx */}
         <div style={{ position: 'absolute', top: -borderThick, left: -borderThick, right: -borderThick, bottom: -borderThick, zIndex: 0, borderRadius: '24px', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
-          <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: hexSize * 0.44, background: 'linear-gradient(to bottom, #ff416c, #ff4b2b)', boxShadow: '4px 0 10px rgba(255,65,108,0.2)' }} />
-          <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: hexSize * 0.44, background: 'linear-gradient(to bottom, #ff416c, #ff4b2b)', boxShadow: '-4px 0 10px rgba(255,65,108,0.2)' }} />
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: hexSize * 0.75, background: 'linear-gradient(to right, #00b09b, #96c93d)', boxShadow: '0 4px 10px rgba(0,176,155,0.2)' }} />
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: hexSize * 0.75, background: 'linear-gradient(to right, #00b09b, #96c93d)', boxShadow: '0 -4px 10px rgba(0,176,155,0.2)' }} />
+          <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: hexW * 0.44, background: 'linear-gradient(to bottom, #ff416c, #ff4b2b)', boxShadow: '4px 0 10px rgba(255,65,108,0.2)' }} />
+          <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: hexW * 0.44, background: 'linear-gradient(to bottom, #ff416c, #ff4b2b)', boxShadow: '-4px 0 10px rgba(255,65,108,0.2)' }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: hexH * 0.75, background: 'linear-gradient(to right, #00b09b, #96c93d)', boxShadow: '0 4px 10px rgba(0,176,155,0.2)' }} />
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: hexH * 0.75, background: 'linear-gradient(to right, #00b09b, #96c93d)', boxShadow: '0 -4px 10px rgba(0,176,155,0.2)' }} />
         </div>
+        
+        {/* Soft Board Background */}
+        <div style={{ position: 'absolute', inset: 0, background: '#f8f9fa', zIndex: 1, borderRadius: '20px' }} />
 
-        <div className="hex-grid" style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
+        <div className="hex-grid" style={{ position: 'relative', zIndex: 2, width: '100%', height: '100%' }}>
           {syncedBoard.map(hex => (
-            <div key={hex.id} style={{ position: 'absolute', left: hex.colIndex * (hexSize * 0.75), top: hex.row * hexH }}>
+            <div key={hex.id} style={{ position: 'absolute', left: hex.colIndex * (hexW * 0.75), top: hex.row * hexH }}>
               <Hexagon letter={hex.letter} owner={hex.owner as any} />
             </div>
           ))}
@@ -192,30 +198,82 @@ export const GamePlayer: React.FC = () => {
       </div>
 
       {/* ── Main Layout ── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: isLandscape ? 'row' : 'column', alignItems: 'center', gap: '15px', padding: '15px', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          {syncedBoard.length > 0 && BoardSection}
-        </div>
-        <div style={{ flex: 1, width: '100%', height: '100%', display: 'flex', flexDirection: 'column', gap: '10px', justifyContent: 'center', minWidth: 0 }}>
-          <div style={{ display: 'flex', gap: '6px' }}>
-            {[
-              { rounds: syncedTeam1Rounds, color: '#ff416c', bg: 'rgba(255,65,108,0.12)', border: 'rgba(255,65,108,0.2)', label: 'أحمر' },
-              { rounds: syncedTeam2Rounds, color: '#00b09b', bg: 'rgba(0,176,155,0.12)', border: 'rgba(0,176,155,0.2)', label: 'أخضر' },
-            ].map(({ rounds, color, bg, border, label }) => (
-              <div key={label} style={{ flex: 1, textAlign: 'center', background: bg, border: `1px solid ${border}`, borderRadius: '10px', padding: '5px 0' }}>
-                <div style={{ fontSize: '1.4rem', fontWeight: '900', color, lineHeight: 1 }}>{rounds}</div>
-                <div style={{ fontSize: '0.65rem', color, opacity: 0.8, fontWeight: '700' }}>{label}</div>
-              </div>
-            ))}
+      <div style={{ flex: 1, display: 'flex', flexDirection: isLandscape ? 'row' : 'column', alignItems: 'center', gap: '20px', padding: '15px', overflow: 'hidden' }}>
+        
+        {/* Controls Section (Match Sample Image) */}
+        <div style={{ 
+          flex: 1, width: '100%', height: '100%', 
+          display: 'flex', flexDirection: 'column', gap: '12px', 
+          justifyContent: isLandscape ? 'flex-start' : 'center', minWidth: 0,
+          maxWidth: isLandscape ? '450px' : 'none',
+        }}>
+          {/* Row 1: 3 Boxes */}
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <div className="glass-panel" style={{ flex: 1, padding: '8px', textAlign: 'center', borderRadius: '12px' }}>
+              <div style={{ fontSize: '0.55rem', color: 'var(--text-secondary)', fontWeight: '800' }}>الغرفة</div>
+              <div style={{ fontSize: '1rem', fontWeight: '950', color: '#ff6b6b' }}>{roomCode}</div>
+            </div>
+            <div className="glass-panel" style={{ flex: 1, padding: '8px', textAlign: 'center', borderRadius: '12px' }}>
+              <div style={{ fontSize: '0.55rem', color: 'var(--text-secondary)', fontWeight: '800' }}>الاسم</div>
+              <div style={{ fontSize: '0.9rem', fontWeight: '950', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{myName}</div>
+            </div>
+            <button onClick={toggleWakeLock} className="glass-panel" style={{ flex: 1, padding: '8px', textAlign: 'center', borderRadius: '12px', border: wakeLockActive ? '1px solid #ffb40066' : '1px solid var(--glass-border)' }}>
+              <div style={{ fontSize: '0.55rem', color: wakeLockActive ? '#ffb400' : 'var(--text-secondary)', fontWeight: '800' }}>التنبيه</div>
+              <div style={{ fontSize: '0.85rem', fontWeight: '950', color: wakeLockActive ? '#ffb400' : '#888' }}>{wakeLockActive ? 'ON' : 'OFF'}</div>
+            </button>
           </div>
-          
-          <div className="glass-panel" style={{ textAlign: 'center', borderRadius: '12px', padding: '8px' }}>
-            <div style={{ color: syncedTurn === 'team1' ? '#ff416c' : '#00b09b', fontWeight: '900', fontSize: '1rem' }}>
-              {syncedTurn === 'team1' ? 'دور الفريق الأحمر' : 'دور الفريق الأخضر'}
+
+          {/* Row 2: Score Bar (Red/Green Split) */}
+          <div style={{ display: 'flex', height: '48px', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-sm)' }}>
+            <div style={{ flex: 1, background: 'linear-gradient(135deg, #ff416c, #ff4b2b)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '950', fontSize: '1.4rem' }}>
+              {syncedTeam1Rounds}
+              <span style={{ fontSize: '0.65rem', marginRight: '6px', opacity: 0.9 }}>أحمر</span>
+            </div>
+            <div style={{ flex: 1, background: 'linear-gradient(135deg, #00b09b, #96c93d)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '950', fontSize: '1.4rem' }}>
+              {syncedTeam2Rounds}
+              <span style={{ fontSize: '0.65rem', marginRight: '6px', opacity: 0.9 }}>أخضر</span>
+            </div>
+          </div>
+
+          {/* Row 3: 3 Boxes (Turn, Letter, Timer) */}
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <div className="glass-panel" style={{ flex: 1, padding: '8px', textAlign: 'center', borderRadius: '12px' }}>
+              <div style={{ fontSize: '0.55rem', color: 'var(--text-secondary)', fontWeight: '800' }}>الدور</div>
+              <div style={{ fontSize: '0.8rem', fontWeight: '950', color: syncedTurn === 'team1' ? '#ff416c' : '#00b09b' }}>{syncedTurn === 'team1' ? 'أحمر' : 'أخضر'}</div>
+            </div>
+            <div className="glass-panel" style={{ flex: 1, padding: '8px', textAlign: 'center', borderRadius: '12px' }}>
+              <div style={{ fontSize: '0.55rem', color: 'var(--text-secondary)', fontWeight: '800' }}>الحرف</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: '950' }}>{currentQuestion?.letter ?? '-'}</div>
+            </div>
+            <div className="glass-panel" style={{ flex: 1, padding: '8px', textAlign: 'center', borderRadius: '12px', background: timeLeft <= 5 && questionActive ? 'rgba(255,65,108,0.05)' : 'white' }}>
+              <div style={{ fontSize: '0.55rem', color: 'var(--text-secondary)', fontWeight: '800' }}>الوقت</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: '950', color: timeLeft <= 5 && questionActive ? '#ff416c' : '#2d3436' }}>
+                {questionActive ? timeLeft : '-'}
+              </div>
             </div>
           </div>
           
-          {!questionActive && SharedBuzzButton}
+          {/* Large Buzzer Box (at bottom in Landscape) */}
+          {isLandscape && (
+            <div style={{ marginTop: 'auto', flex: 0.8 }}>
+              {!questionActive ? (
+                <div className="glass-panel" style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontWeight: '800', border: '2px dashed var(--glass-border)' }}>
+                  انتظار السؤال...
+                </div>
+              ) : SharedBuzzButton}
+            </div>
+          )}
+
+          {!isLandscape && !questionActive && (
+            <div style={{ marginTop: '10px' }}>
+              {SharedBuzzButton}
+            </div>
+          )}
+        </div>
+
+        {/* Board Section */}
+        <div style={{ flex: 1, width: isLandscape ? '50%' : '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          {syncedBoard.length > 0 && BoardSection}
         </div>
       </div>
 
