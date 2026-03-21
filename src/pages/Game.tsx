@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Board } from '../components/Board';
 import { useNavigate } from 'react-router-dom';
-import { RotateCcw, Home, Undo2, Zap, Users } from 'lucide-react';
+import { RotateCcw, Home, Undo2, Zap, Users, Sun, Moon, Bell } from 'lucide-react';
 import { useGameStore } from '../store/gameStore';
 import type { Team } from '../store/gameStore';
 import { createPortal } from 'react-dom';
@@ -9,6 +9,7 @@ import { QuestionModal } from '../components/QuestionModal';
 import { useAudio } from '../hooks/useAudio';
 import { useRoomStore } from '../store/roomStore';
 import { broadcastGameState, broadcastBuzz as _broadcastBuzz } from '../services/realtime';
+import { useWakeLock } from '../hooks/useWakeLock';
 
 // suppress unused import lint (broadcastBuzz kept for reference)
 void _broadcastBuzz;
@@ -24,7 +25,23 @@ export const Game: React.FC = () => {
   const { buzzQueue, clearBuzzes, roomCode, players } = useRoomStore();
   const [showPlayerPanel, setShowPlayerPanel] = useState(false);
   const [showWarningDialog, setShowWarningDialog] = useState<'reset' | 'home' | null>(null);
+  const [joinNotification, setJoinNotification] = useState<string | null>(null);
   const { playCorrect, playWrong } = useAudio();
+  const { isActive: wakeLockActive, toggleWakeLock } = useWakeLock();
+  
+  const prevPlayersCount = useRef(players.length);
+
+  // Monitor for new players to show notification
+  useEffect(() => {
+    if (players.length > prevPlayersCount.current) {
+      const newPlayer = players[players.length - 1];
+      if (newPlayer) {
+        setJoinNotification(`اللاعب ${newPlayer.name} انضم للغرفة!`);
+        setTimeout(() => setJoinNotification(null), 4000);
+      }
+    }
+    prevPlayersCount.current = players.length;
+  }, [players]);
   const [scale, setScale] = useState(1);
   const [isLandscape, setIsLandscape] = useState(false);
 
@@ -96,15 +113,46 @@ export const Game: React.FC = () => {
     }}>
 
       {/* Room code badge — always visible */}
-      <div style={{ position: 'absolute', top: '12px', right: '14px', zIndex: 50, background: 'rgba(0,0,0,0.65)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)', borderRadius: '10px', padding: '4px 12px', textAlign: 'center', direction: 'ltr' }}>
-        <div style={{ fontSize: '0.55rem', color: '#666', letterSpacing: '1px', fontFamily: "'Cairo', sans-serif" }}>ROOM</div>
-        <div style={{ fontSize: '1.05rem', fontWeight: '900', letterSpacing: '5px', color: '#ff6b6b', fontFamily: "'Cairo', sans-serif" }}>{roomCode}</div>
+      <div style={{ position: 'absolute', top: '12px', right: '14px', zIndex: 100, display: 'flex', gap: '10px', alignItems: 'center' }}>
+        
+        {/* Wake Lock Toggle */}
+        <button 
+          onClick={toggleWakeLock}
+          style={{ 
+            background: wakeLockActive ? 'rgba(255,210,0,0.15)' : 'rgba(0,0,0,0.6)', 
+            border: `1px solid ${wakeLockActive ? 'rgba(255,210,0,0.3)' : 'rgba(255,255,255,0.1)'}`,
+            borderRadius: '10px', padding: '6px 10px', color: wakeLockActive ? '#ffd200' : '#888',
+            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: "'Cairo', sans-serif"
+          }}
+        >
+          {wakeLockActive ? <Sun size={15} fill="currentColor" /> : <Moon size={15} />}
+          <span style={{ fontSize: '0.75rem', fontWeight: '800' }}>Stay Awake</span>
+        </button>
+
+        <div style={{ background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,107,107,0.3)', backdropFilter: 'blur(10px)', borderRadius: '12px', padding: '4px 14px', textAlign: 'center', direction: 'ltr', boxShadow: '0 4px 15px rgba(255,107,107,0.1)' }}>
+          <div style={{ fontSize: '0.55rem', color: '#ff6b6b', letterSpacing: '1px', fontWeight: '800' }}>ROOM</div>
+          <div style={{ fontSize: '1.2rem', fontWeight: '950', letterSpacing: '5px', color: '#ff6b6b' }}>{roomCode}</div>
+        </div>
       </div>
 
+      {/* Join Notification Toast */}
+      {joinNotification && (
+        <div style={{ 
+          position: 'absolute', top: '70px', left: '50%', transform: 'translateX(-50%)', 
+          zIndex: 200, background: 'rgba(50,55,70,0.95)', border: '1px solid #77aaff33',
+          padding: '12px 24px', borderRadius: '40px', color: 'white', fontWeight: '900',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', gap: '12px',
+          animation: 'slideInDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)', cursor: 'pointer'
+        }} onClick={() => setShowPlayerPanel(true)}>
+          <Bell size={18} color="#77aaff" />
+          <span style={{ fontSize: '1rem', fontWeight: '700' }}>{joinNotification}</span>
+        </div>
+      )}
+
       {/* Mid-game players button */}
-      <button onClick={() => setShowPlayerPanel(true)} style={{ position: 'absolute', top: '12px', left: '14px', zIndex: 50, background: 'rgba(0,0,0,0.65)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)', borderRadius: '10px', padding: '7px 12px', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: "'Cairo', sans-serif", fontSize: '0.85rem', fontWeight: '700', direction: 'rtl', }}>
-        <Users size={16} />
-        اللاعبون ({players.length})
+      <button onClick={() => setShowPlayerPanel(true)} style={{ position: 'absolute', top: '12px', left: '14px', zIndex: 50, background: 'rgba(0,0,0,0.65)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)', borderRadius: '10px', padding: '8px 16px', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontFamily: "'Cairo', sans-serif", fontSize: '0.95rem', fontWeight: '800', direction: 'rtl', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
+        <Users size={18} />
+        اللاعبون <span style={{ background: 'rgba(255,255,255,0.15)', padding: '1px 6px', borderRadius: '4px', fontSize: '0.8rem', marginRight: '4px' }}>{players.length}</span>
       </button>
       <div style={{
         transform: `scale(${scale})`,

@@ -6,12 +6,12 @@ export const LobbyPlayer: React.FC = () => {
   const navigate = useNavigate();
   const { myName, myTeam, gamePhase, players, clientId } = useRoomStore();
 
-  // Navigate to game when admin starts
+  // Navigate to game when game is active AND player has been assigned a team
   useEffect(() => {
-    if (gamePhase === 'game') {
+    if (gamePhase === 'game' && myTeam !== 'none') {
       navigate('/game-player');
     }
-  }, [gamePhase, navigate]);
+  }, [gamePhase, myTeam, navigate]);
 
   const teamColor = myTeam === 'team1' ? '#ff416c' : myTeam === 'team2' ? '#00b09b' : '#666';
   const teamLabel = myTeam === 'team1' ? 'الفريق الأحمر 🔴' : myTeam === 'team2' ? 'الفريق الأخضر 🟢' : 'انتظر التقسيم...';
@@ -54,9 +54,17 @@ export const LobbyPlayer: React.FC = () => {
         )}
       </div>
 
-      {/* Waiting */}
-      <div style={{ color: '#444', fontSize: '0.95rem', animation: 'pulse 2.5s ease-in-out infinite', textAlign: 'center' }}>
-        ⏳ في انتظار بدء المدير للعبة...
+      {/* Waiting Status */}
+      <div style={{ textAlign: 'center', marginTop: '10px' }}>
+        {gamePhase === 'game' && myTeam === 'none' ? (
+          <div style={{ color: '#f7971e', fontSize: '1.1rem', fontWeight: '700', animation: 'pulse 1.5s infinite' }}>
+            ⚠️ اللعبة بدأت! انتظر المدير ليضمك لفريق...
+          </div>
+        ) : (
+          <div style={{ color: '#444', fontSize: '0.95rem', animation: 'pulse 2.5s ease-in-out infinite' }}>
+            ⏳ في انتظار بدء المدير للعبة...
+          </div>
+        )}
       </div>
 
       <style>{`

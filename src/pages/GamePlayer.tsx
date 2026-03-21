@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useRoomStore } from '../store/roomStore';
 import { broadcastBuzz } from '../services/realtime';
 import { useAudio } from '../hooks/useAudio';
+import { useWakeLock } from '../hooks/useWakeLock';
+import { Zap, Sun, Moon } from 'lucide-react';
 
 export const GamePlayer: React.FC = () => {
   const navigate = useNavigate();
@@ -14,7 +16,9 @@ export const GamePlayer: React.FC = () => {
     syncedBoard, syncedTurn,
     syncedTeam1Rounds, syncedTeam2Rounds,
   } = useRoomStore();
+  
   const { playClick, playWin } = useAudio();
+  const { isActive: wakeLockActive, toggleWakeLock } = useWakeLock();
 
   const [buzzed, setBuzzed] = useState(false);
   const [buzzerScale, setBuzzerScale] = useState(1);
@@ -28,7 +32,7 @@ export const GamePlayer: React.FC = () => {
   const teamLabel = team === 'team1' ? 'الفريق الأحمر' : 'الفريق الأخضر';
 
   // Board geometry constants
-  const hexH = hexSize * 0.866;
+  const hexH = hexSize * 0.866 * 1.05; // Added slight spacing multiplier
   const boardW = (4 * 0.75 + 1) * hexSize;
   const boardH = 5.5 * hexH;
   const borderThick = Math.max(14, hexSize * 0.22);
@@ -41,20 +45,16 @@ export const GamePlayer: React.FC = () => {
     setIsLandscape(landscape);
 
     if (landscape) {
-      // Board occupies ~58% of width, full height minus header (~52px)
       const availW = ww * 0.58 - 20;
-      const availH = wh - 52 - 20;
-      // boardW = 4 * hexSize  →  hexSize = availW / 4
-      // boardH = 5.5 * hexH = 5.5 * hexSize * 0.866  →  hexSize = availH / (5.5 * 0.866)
-      const fromW = availW / 4;
-      const fromH = availH / (5.5 * 0.866);
+      const availH = wh - 65 - 20; // Room for header
+      const fromW = availW / 4.2;
+      const fromH = availH / (5.6 * 0.866);
       setHexSize(Math.max(30, Math.floor(Math.min(fromW, fromH))));
     } else {
-      // Board occupies full width minus padding, ~40% of height
       const availW = ww - 28;
-      const availH = wh * 0.40;
-      const fromW = availW / 4;
-      const fromH = availH / (5.5 * 0.866);
+      const availH = wh * 0.42;
+      const fromW = availW / 4.2;
+      const fromH = availH / (5.6 * 0.866);
       setHexSize(Math.max(28, Math.floor(Math.min(fromW, fromH))));
     }
   }, []);
@@ -85,8 +85,8 @@ export const GamePlayer: React.FC = () => {
     playClick();
     if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
     setBuzzerScale(0.88);
-    setTimeout(() => setBuzzerScale(1.1), 150);
-    setTimeout(() => setBuzzerScale(1), 320);
+    setTimeout(() => setBuzzerScale(1.15), 150);
+    setTimeout(() => setBuzzerScale(1), 350);
     await broadcastBuzz(roomCode!, { playerId: clientId, playerName: myName, team, timestamp: Date.now() });
   };
 
@@ -96,21 +96,28 @@ export const GamePlayer: React.FC = () => {
   // ───── Board Render ─────
   const BoardSection = (
     <div style={{ position: 'relative', flexShrink: 0 }}>
-      {/* Outer glow wrapper with colored borders */}
-      <div style={{ position: 'relative', width: boardW + borderThick * 2, height: boardH + borderThick * 2, borderRadius: '12px', overflow: 'hidden', boxShadow: '0 12px 40px rgba(0,0,0,0.6)' }}>
-        {/* Red left */}
-        <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: borderThick, background: 'linear-gradient(to bottom, #ff416c, #ff4b2b)', zIndex: 2 }} />
-        {/* Red right */}
-        <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: borderThick, background: 'linear-gradient(to bottom, #ff416c, #ff4b2b)', zIndex: 2 }} />
-        {/* Green top */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: borderThick, background: 'linear-gradient(to right, #00b09b, #96c93d)', zIndex: 2 }} />
-        {/* Green bottom */}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: borderThick, background: 'linear-gradient(to right, #00b09b, #96c93d)', zIndex: 2 }} />
+      <div style={{ 
+        position: 'relative', width: boardW + borderThick * 2, height: boardH + borderThick * 2, 
+        borderRadius: '16px', overflow: 'hidden', 
+        boxShadow: '0 20px 50px rgba(0,0,0,0.8), inset 0 0 20px rgba(255,255,255,0.05)',
+        border: '1px solid rgba(255,255,255,0.08)' 
+      }}>
+        {/* Borders */}
+        <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: borderThick, background: 'linear-gradient(to bottom, #ff3b6c, #ff1b00)', zIndex: 2, boxShadow: '5px 0 15px rgba(255,0,0,0.3)' }} />
+        <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: borderThick, background: 'linear-gradient(to bottom, #ff3b6c, #ff1b00)', zIndex: 2, boxShadow: '-5px 0 15px rgba(255,0,0,0.3)' }} />
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: borderThick, background: 'linear-gradient(to right, #00b09b, #3d9646)', zIndex: 2, boxShadow: '0 5px 15px rgba(0,255,100,0.2)' }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: borderThick, background: 'linear-gradient(to right, #00b09b, #3d9646)', zIndex: 2, boxShadow: '0 -5px 15px rgba(0,255,100,0.2)' }} />
+        
         {/* Hex grid */}
-        <div style={{ position: 'absolute', left: borderThick, top: borderThick, width: boardW, height: boardH, background: 'rgba(18,18,25,0.95)', zIndex: 1 }}>
+        <div style={{ position: 'absolute', left: borderThick, top: borderThick, width: boardW, height: boardH, background: 'rgba(10,10,18,0.95)', zIndex: 1 }}>
           {syncedBoard.map(hex => {
-            const bg = hex.owner === 'team1' ? 'rgba(255,65,108,0.82)' : hex.owner === 'team2' ? 'rgba(0,176,155,0.82)' : 'rgba(50,52,65,0.9)';
-            const glow = hex.owner === 'team1' ? '0 0 8px rgba(255,65,108,0.5)' : hex.owner === 'team2' ? '0 0 8px rgba(0,176,155,0.5)' : 'none';
+            const isTeam1 = hex.owner === 'team1';
+            const isTeam2 = hex.owner === 'team2';
+            const bg = isTeam1 ? 'linear-gradient(135deg, #ff416c, #ff4b2b)' : isTeam2 ? 'linear-gradient(135deg, #00b09b, #96c93d)' : 'linear-gradient(135deg, #2c2e3e, #1a1c2a)';
+            const shadow = isTeam1 ? '0 0 15px rgba(255,65,108,0.6)' : isTeam2 ? '0 0 15px rgba(0,176,155,0.6)' : 'none';
+            const textColor = isTeam1 || isTeam2 ? 'white' : '#777';
+            const borderColor = isTeam1 || isTeam2 ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.08)';
+
             return (
               <div key={hex.id} style={{
                 position: 'absolute',
@@ -120,9 +127,12 @@ export const GamePlayer: React.FC = () => {
                 clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
                 background: bg,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: `${Math.max(10, hexSize * 0.22)}px`, fontWeight: '900', color: 'white',
-                boxShadow: glow,
-                transition: 'background 0.4s, box-shadow 0.4s',
+                fontSize: `${Math.max(12, hexSize * 0.3)}px`, fontWeight: '900', color: textColor,
+                boxShadow: shadow,
+                transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                border: `1px solid ${borderColor}`,
+                zIndex: isTeam1 || isTeam2 ? 10 : 1,
+                transform: isTeam1 || isTeam2 ? 'scale(1.02)' : 'scale(1)',
               }}>{hex.letter}</div>
             );
           })}
@@ -131,48 +141,44 @@ export const GamePlayer: React.FC = () => {
     </div>
   );
 
-  // ───── Info + Question + Buzzer panel ─────
   const InfoPanel = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, minWidth: 0, justifyContent: 'space-between', padding: isLandscape ? '0 10px 0 0' : '0' }}>
-      {/* Scores */}
       <div style={{ display: 'flex', gap: '6px' }}>
         {[
-          { rounds: syncedTeam1Rounds, color: '#ff416c', bg: 'rgba(255,65,108,0.14)', border: 'rgba(255,65,108,0.3)', label: 'أحمر' },
-          { rounds: syncedTeam2Rounds, color: '#00b09b', bg: 'rgba(0,176,155,0.14)', border: 'rgba(0,176,155,0.3)', label: 'أخضر' },
+          { rounds: syncedTeam1Rounds, color: '#ff416c', bg: 'rgba(255,65,108,0.18)', border: 'rgba(255,65,108,0.3)', label: 'أحمر' },
+          { rounds: syncedTeam2Rounds, color: '#00b09b', bg: 'rgba(0,176,155,0.18)', border: 'rgba(0,176,155,0.3)', label: 'أخضر' },
         ].map(({ rounds, color, bg, border, label }) => (
-          <div key={label} style={{ flex: 1, textAlign: 'center', background: bg, border: `1px solid ${border}`, borderRadius: '10px', padding: '4px 0' }}>
-            <div style={{ fontSize: '1.4rem', fontWeight: '900', color, lineHeight: 1 }}>{rounds}</div>
-            <div style={{ fontSize: '0.65rem', color, opacity: 0.8 }}>{label}</div>
+          <div key={label} style={{ flex: 1, textAlign: 'center', background: bg, border: `1px solid ${border}`, borderRadius: '12px', padding: '6px 0', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: '900', color, lineHeight: 1 }}>{rounds}</div>
+            <div style={{ fontSize: '0.7rem', color, opacity: 0.9, fontWeight: '700' }}>{label}</div>
           </div>
         ))}
       </div>
 
-      {/* Turn */}
       {!questionActive && (
-        <div style={{ textAlign: 'center', fontSize: '0.85rem', color: '#666', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', padding: '6px' }}>
+        <div style={{ textAlign: 'center', fontSize: '0.9rem', color: '#999', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '8px 12px', animation: 'fadeIn 0.6s ease-out' }}>
           دور الاختيار:{' '}
-          <span style={{ color: syncedTurn === 'team1' ? '#ff416c' : '#00b09b', fontWeight: '700' }}>
+          <span style={{ color: syncedTurn === 'team1' ? '#ff416c' : '#00b09b', fontWeight: '900' }}>
             {syncedTurn === 'team1' ? 'الأحمر' : 'الأخضر'}
           </span>
         </div>
       )}
 
-      {/* Question card */}
       {questionActive && currentQuestion && (
-        <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', textAlign: 'center', animation: 'fadeInDown 0.4s ease-out', flex: 1 }}>
-          <div style={{ fontSize: '0.78rem', color: '#888', marginBottom: '5px' }}>
-            حرف <span style={{ color: '#f7971e', fontWeight: '800', fontSize: '0.9rem' }}>{currentQuestion.letter}</span>
+        <div style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02))', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px', padding: '18px', textAlign: 'center', animation: 'fadeInDown 0.4s cubic-bezier(0.19, 1, 0.22, 1)', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: '0 10px 30px rgba(0,0,0,0.3)' }}>
+          <div style={{ fontSize: '0.85rem', color: '#aaa', marginBottom: '8px', letterSpacing: '1px' }}>
+            حرف <span style={{ color: '#ffd200', fontWeight: '900', fontSize: '1.2rem', textShadow: '0 0 10px rgba(255,210,0,0.4)' }}>{currentQuestion.letter}</span>
           </div>
-          <p style={{ fontSize: isLandscape ? '1.1rem' : '1.05rem', fontWeight: '800', color: '#fff', margin: 0, lineHeight: 1.6 }}>
+          <p style={{ fontSize: isLandscape ? '1.2rem' : '1.15rem', fontWeight: '800', color: '#fff', margin: 0, lineHeight: 1.6, textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
             {currentQuestion.question}
           </p>
           {answerRevealed && (
-            <div style={{ marginTop: '10px', background: 'rgba(247,151,30,0.15)', border: '1px solid rgba(247,151,30,0.35)', borderRadius: '10px', padding: '10px', animation: 'fadeIn 0.5s ease-out' }}>
-              <div style={{ fontSize: '0.7rem', color: '#f7971e', marginBottom: '3px' }}>الجواب</div>
-              <div style={{ fontSize: '1.2rem', fontWeight: '900', color: '#ffd200' }}>{revealedAnswer}</div>
+            <div style={{ marginTop: '14px', background: 'rgba(247,151,30,0.18)', border: '1px solid rgba(247,151,30,0.4)', borderRadius: '12px', padding: '12px', animation: 'fadeIn 0.6s ease-out', boxShadow: '0 0 20px rgba(247,151,30,0.1)' }}>
+              <div style={{ fontSize: '0.75rem', color: '#f7971e', marginBottom: '4px', fontWeight: '700' }}>الجواب</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: '900', color: '#ffd200' }}>{revealedAnswer}</div>
               {awardedTeam && awardedTeam !== 'none' && (
-                <div style={{ marginTop: '5px', fontSize: '0.85rem', color: awardedTeam === 'team1' ? '#ff6b6b' : '#00d4b4', fontWeight: '700' }}>
-                  🏆 {awardedTeam === 'team1' ? 'الفريق الأحمر فاز' : 'الفريق الأخضر فاز'}
+                <div style={{ marginTop: '8px', fontSize: '1rem', color: awardedTeam === 'team1' ? '#ff6b6b' : '#00d4b4', fontWeight: '900', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                  <Zap size={16} /> {awardedTeam === 'team1' ? 'نقطة للفريق الأحمر!' : 'نقطة للفريق الأخضر!'}
                 </div>
               )}
             </div>
@@ -180,44 +186,44 @@ export const GamePlayer: React.FC = () => {
         </div>
       )}
 
-      {/* Buzz result */}
       {firstBuzz && questionActive && (
-        <div style={{ textAlign: 'center', animation: 'fadeIn 0.35s ease-out' }}>
+        <div style={{ textAlign: 'center', animation: 'fadeIn 0.4s ease-out' }}>
           <div style={{
-            display: 'inline-block',
-            background: firstBuzz.team === 'team1' ? 'rgba(255,65,108,0.18)' : 'rgba(0,176,155,0.18)',
-            border: `1px solid ${firstBuzz.team === 'team1' ? 'rgba(255,65,108,0.45)' : 'rgba(0,176,155,0.45)'}`,
-            borderRadius: '12px', padding: '7px 16px',
-            color: firstBuzz.team === 'team1' ? '#ff6b6b' : '#00d4b4',
-            fontSize: '0.92rem', fontWeight: '800',
+            display: 'inline-flex', alignItems: 'center', gap: '8px',
+            background: firstBuzz.team === 'team1' ? 'rgba(255,65,108,0.2)' : 'rgba(0,176,155,0.2)',
+            border: `1px solid ${firstBuzz.team === 'team1' ? 'rgba(255,65,108,0.5)' : 'rgba(0,176,155,0.5)'}`,
+            borderRadius: '14px', padding: '10px 22px',
+            color: firstBuzz.team === 'team1' ? '#ff8585' : '#00ffda',
+            fontSize: '1rem', fontWeight: '900',
+            boxShadow: `0 0 20px ${firstBuzz.team === 'team1' ? 'rgba(255,65,108,0.2)' : 'rgba(0,176,155,0.2)'}`
           }}>
-            {firstBuzz.playerId === clientId ? '⚡ أنت ضغطت أولاً!' : `⚡ ${firstBuzz.playerName} ضغط أولاً!`}
+            <Zap size={18} fill="currentColor" />
+            {firstBuzz.playerId === clientId ? 'أنت ضغطت أولاً!' : `${firstBuzz.playerName} ضغط أولاً!`}
           </div>
           {myBuzzRank > 0 && (
-            <div style={{ marginTop: '4px', fontSize: '0.75rem', color: '#555' }}>أنت في المرتبة #{myBuzzRank + 1}</div>
+            <div style={{ marginTop: '6px', fontSize: '0.8rem', color: '#555', fontWeight: '700' }}>أنت في المرتبة #{myBuzzRank + 1}</div>
           )}
         </div>
       )}
 
-      {/* BUZZER */}
       <button
         onClick={handleBuzz}
         disabled={!questionActive || buzzed}
         style={{
           width: '100%',
-          height: isLandscape ? '72px' : '80px',
-          borderRadius: '18px',
-          background: !questionActive ? 'rgba(35,35,45,0.8)' : buzzed
-            ? 'linear-gradient(135deg, #444, #333)'
+          height: isLandscape ? '76px' : '86px',
+          borderRadius: '20px',
+          background: !questionActive ? 'rgba(40,40,55,0.6)' : buzzed
+            ? 'linear-gradient(135deg, #333, #222)'
             : `linear-gradient(135deg, ${teamColor}, ${team === 'team1' ? '#ff4b2b' : '#96c93d'})`,
-          border: !questionActive ? '1px solid rgba(255,255,255,0.06)' : 'none',
-          color: !questionActive ? '#3a3a4a' : buzzed ? '#888' : 'white',
-          fontSize: !questionActive ? '0.95rem' : '1.6rem',
-          fontWeight: '900', letterSpacing: '2px',
+          border: !questionActive ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(255,255,255,0.15)',
+          color: !questionActive ? '#444' : buzzed ? '#666' : 'white',
+          fontSize: !questionActive ? '1.1rem' : '1.8rem',
+          fontWeight: '950', letterSpacing: '2px',
           cursor: !questionActive || buzzed ? 'not-allowed' : 'pointer',
-          boxShadow: questionActive && !buzzed ? `0 12px 32px ${teamColor}55` : 'none',
+          boxShadow: questionActive && !buzzed ? `0 15px 45px ${teamColor}66` : 'none',
           transform: `scale(${buzzerScale})`,
-          transition: 'transform 0.15s, background 0.3s, box-shadow 0.3s',
+          transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
           flexShrink: 0,
         }}
       >
@@ -229,42 +235,61 @@ export const GamePlayer: React.FC = () => {
   return (
     <div ref={containerRef} style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      background: `radial-gradient(circle at 50% 0%, ${teamColor}14 0%, rgb(8,8,14) 70%)`,
+      background: `radial-gradient(circle at 50% 0%, ${teamColor}18 0%, rgb(8,8,14) 75%)`,
       color: 'white', fontFamily: "'Cairo', sans-serif", direction: 'rtl',
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
     }}>
       {/* ── Header ── */}
       <div style={{
-        padding: '8px 14px', flexShrink: 0,
+        padding: '10px 16px', flexShrink: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
-        background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)',
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
+        background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(12px)',
+        zIndex: 100,
       }}>
-        {/* Player avatar + name */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: `${teamColor}28`, border: `2px solid ${teamColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', fontWeight: '800', color: teamColor, flexShrink: 0 }}>
-            {myName?.[0] ?? '?'}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ position: 'relative' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: `${teamColor}28`, border: `2px solid ${teamColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', fontWeight: '900', color: teamColor, flexShrink: 0 }}>
+              {myName?.[0] ?? '?'}
+            </div>
+            <div style={{ position: 'absolute', bottom: -2, right: -2, width: '12px', height: '12px', borderRadius: '50%', background: '#00ff00', border: '2px solid #000' }} title="متصل" />
           </div>
           <div>
-            <div style={{ fontSize: '0.88rem', fontWeight: '700', lineHeight: 1 }}>{myName}</div>
-            <div style={{ fontSize: '0.65rem', color: teamColor }}>{teamLabel}</div>
+            <div style={{ fontSize: '1rem', fontWeight: '900', lineHeight: 1.1 }}>{myName}</div>
+            <div style={{ fontSize: '0.75rem', color: teamColor, fontWeight: '700' }}>{teamLabel}</div>
           </div>
         </div>
 
-        {/* Room code (always visible) */}
-        <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '3px 10px', textAlign: 'center' }}>
-          <div style={{ fontSize: '0.55rem', color: '#666', letterSpacing: '1px' }}>ROOM</div>
-          <div style={{ fontSize: '1rem', fontWeight: '900', letterSpacing: '4px', color: '#ff6b6b' }}>{roomCode}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* Wake Lock Toggle */}
+          <button 
+            onClick={toggleWakeLock}
+            style={{ 
+              background: wakeLockActive ? 'rgba(255,210,0,0.15)' : 'rgba(255,255,255,0.05)', 
+              border: `1px solid ${wakeLockActive ? 'rgba(255,210,0,0.3)' : 'rgba(255,255,255,0.1)'}`,
+              borderRadius: '8px', padding: '6px 8px', color: wakeLockActive ? '#ffd200' : '#666',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', transition: 'all 0.3s'
+            }}
+            title={wakeLockActive ? "الشاشة ستظل تعمل" : "تشغيل منع إغلاق الشاشة"}
+          >
+            {wakeLockActive ? <Sun size={14} fill="currentColor" /> : <Moon size={14} />}
+            <span style={{ fontSize: '0.7rem', fontWeight: '700' }}>Stay Awake</span>
+          </button>
+
+          {/* Room code */}
+          <div style={{ background: 'rgba(255,107,107,0.1)', border: '1px solid rgba(255,107,107,0.25)', borderRadius: '10px', padding: '4px 14px', textAlign: 'center', minWidth: '80px', boxShadow: 'inset 0 0 10px rgba(255,65,108,0.05)' }}>
+            <div style={{ fontSize: '0.55rem', color: '#ff6b6b', letterSpacing: '1px', fontWeight: '800' }}>ROOM</div>
+            <div style={{ fontSize: '1.2rem', fontWeight: '950', letterSpacing: '4px', color: '#ff6b6b', lineHeight: 1.1 }}>{roomCode}</div>
+          </div>
         </div>
       </div>
 
       {/* ── Main Content ── */}
       {isLandscape ? (
-        // Landscape: board left (big), info panel right
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '12px', padding: '8px 14px', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px', padding: '12px 20px', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, animation: 'fadeInScale 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}>
             {syncedBoard.length > 0 ? BoardSection : (
-              <div style={{ color: '#333', fontSize: '0.9rem', textAlign: 'center', padding: '20px' }}>جاري تحميل اللوحة...</div>
+              <div style={{ color: '#444', fontSize: '1rem', fontStyle: 'italic' }}>جاري تحميل اللوحة...</div>
             )}
           </div>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center', minWidth: 0 }}>
@@ -272,22 +297,24 @@ export const GamePlayer: React.FC = () => {
           </div>
         </div>
       ) : (
-        // Portrait: board top, info panel below
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'center', padding: '8px 14px 4px' }}>
+          <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'center', padding: '12px 16px 8px', animation: 'fadeInScale 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}>
             {syncedBoard.length > 0 ? BoardSection : (
-              <div style={{ color: '#333', fontSize: '0.9rem', padding: '20px' }}>جاري تحميل اللوحة...</div>
+              <div style={{ color: '#444', fontSize: '1rem', padding: '40px' }}>جاري تحميل اللوحة...</div>
             )}
           </div>
-          <div style={{ flex: 1, padding: '4px 14px 14px', display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
+          <div style={{ flex: 1, padding: '4px 16px 20px', display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
             {InfoPanel}
           </div>
         </div>
       )}
 
       <style>{`
-        @keyframes fadeInDown { from { opacity:0; transform:translateY(-16px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes fadeInDown { from { opacity:0; transform:translateY(-20px); } to { opacity:1; transform:translateY(0); } }
         @keyframes fadeIn     { from { opacity:0; } to { opacity:1; } }
+        @keyframes fadeInScale { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); borderRadius: 10px; }
       `}</style>
     </div>
   );
