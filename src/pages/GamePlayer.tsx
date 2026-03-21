@@ -42,7 +42,7 @@ export const GamePlayer: React.FC = () => {
     const padding = 15;
 
     if (landscape) {
-      const availW = ww * 0.58 - padding * 2;
+      const availW = ww * 0.75 - padding * 2;
       const availH = wh - headerHeight - padding * 2;
       const fromW = availW / 4.2;
       const fromH = availH / (5.6 * 0.866);
@@ -168,7 +168,7 @@ export const GamePlayer: React.FC = () => {
         flexShrink: 0,
       }}
     >
-      {!questionActive ? 'انتظر...' : buzzed ? '✓' : '⚡ BUZZ!'}
+      {!questionActive ? '⚡' : buzzed ? '✓' : '⚡ BUZZ!'}
     </button>
   );
 
@@ -222,12 +222,13 @@ export const GamePlayer: React.FC = () => {
               </div>
             ))}
           </div>
+          
           <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', padding: '8px' }}>
             <div style={{ color: syncedTurn === 'team1' ? '#ff416c' : '#00b09b', fontWeight: '900', fontSize: '1rem' }}>
               {syncedTurn === 'team1' ? 'دور الفريق الأحمر' : 'دور الفريق الأخضر'}
             </div>
           </div>
-          {!questionActive && <div style={{ flex: 1 }} />}
+          
           {!questionActive && SharedBuzzButton}
         </div>
       </div>

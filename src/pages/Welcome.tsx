@@ -5,8 +5,9 @@ import { fetchAllQuestions } from '../services/questions';
 import { generateRoomCode, useRoomStore } from '../store/roomStore';
 import type { PlayerPresence } from '../store/roomStore';
 import { subscribeToRoom } from '../services/realtime';
+import { supabase } from '../lib/supabase';
 
-type Mode = 'select' | 'admin-loading' | 'player-join' | 'player-connecting';
+type Mode = 'select' | 'admin-passcode' | 'admin-loading' | 'player-join' | 'player-connecting';
 
 export const Welcome: React.FC = () => {
   const navigate = useNavigate();
@@ -14,27 +15,57 @@ export const Welcome: React.FC = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [roomCode, setRoomCode] = useState('');
   const [playerName, setPlayerName] = useState('');
+  const [passcode, setPasscode] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   React.useEffect(() => {
     fetchAllQuestions().then(success => { if (success) setIsLoaded(true); });
   }, []);
 
-  const handleAdminClick = async () => {
+  const handleAdminClick = () => {
+    setMode('admin-passcode');
+    setError(null);
+  };
+
+  const handleAdminPasscode = async () => {
+    if (!passcode.trim()) { setError('يرجى إدخال رمز المدير'); return; }
+    
     setMode('admin-loading');
     setError(null);
-    const code = generateRoomCode();
-    const clientId = useRoomStore.getState().clientId;
-    const presence: PlayerPresence = { clientId, name: 'Admin', team: 'none', isAdmin: true };
-
-    useRoomStore.setState({ roomCode: code, isAdmin: true, myName: 'Admin' });
 
     try {
+      // 1. Validate Passcode against Supabase
+      const { data, error: dbError } = await supabase
+        .from('admin_passcodes')
+        .select('*')
+        .eq('code', passcode.trim())
+        .single();
+
+      if (dbError || !data) {
+        throw new Error('رمز غير صحيح');
+      }
+
+      // 2. Check Time Validity
+      const now = new Date();
+      const start = new Date(data.start_date);
+      const end = new Date(data.end_date);
+
+      if (now < start || now > end) {
+        throw new Error('الرمز منتهي الصلاحية أو غير مفعل بعد');
+      }
+
+      // 3. If Valid, Proceed to Create Room
+      const code = generateRoomCode();
+      const clientId = useRoomStore.getState().clientId;
+      const presence: PlayerPresence = { clientId, name: 'Admin', team: 'none', isAdmin: true };
+
+      useRoomStore.setState({ roomCode: code, isAdmin: true, myName: 'Admin' });
       await subscribeToRoom(code, presence);
       navigate('/lobby-admin');
-    } catch {
-      setError('فشل الاتصال. تحقق من الإنترنت وحاول مرة أخرى.');
-      setMode('select');
+      
+    } catch (err: any) {
+      setError(err.message || 'فشل التحقق من الرمز. حاول مرة أخرى.');
+      setMode('admin-passcode');
     }
   };
 
@@ -142,6 +173,47 @@ export const Welcome: React.FC = () => {
               <div style={{ fontSize: '0.9rem', color: '#999' }}>انضم إلى غرفة وألعب مع فريقك</div>
             </div>
           </button>
+        </div>
+      )}
+
+      {mode === 'admin-passcode' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%', maxWidth: '360px', animation: 'fadeInUp 0.4s ease-out' }}>
+          <h2 style={{ textAlign: 'center', fontSize: '1.5rem', margin: '0 0 6px', color: '#ff416c' }}>رمز المدير المطلوب</h2>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            <label style={{ fontSize: '0.9rem', color: '#888' }}>أدخل رمز تفعيل اللعبة</label>
+            <input
+              type="password" value={passcode}
+              onChange={(e) => setPasscode(e.target.value)}
+              placeholder="••••"
+              onKeyDown={(e) => e.key === 'Enter' && handleAdminPasscode()}
+              style={{
+                padding: '16px 20px', borderRadius: '14px',
+                background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)',
+                color: 'white', fontSize: '1.4rem', fontWeight: '900',
+                textAlign: 'center', letterSpacing: '4px',
+                fontFamily: "'Cairo', sans-serif", outline: 'none',
+              }}
+              autoFocus
+            />
+          </div>
+
+          <button
+            onClick={handleAdminPasscode}
+            style={{
+              padding: '16px', background: 'linear-gradient(135deg, #ff416c, #ff4b2b)',
+              border: 'none', borderRadius: '14px', color: 'white',
+              fontSize: '1.25rem', fontWeight: '800', cursor: 'pointer',
+              boxShadow: '0 8px 22px rgba(255,65,108,0.3)', marginTop: '4px',
+            }}
+          >
+            تفعيل وإنشاء غرفة ←
+          </button>
+
+          <button
+            onClick={() => { setMode('select'); setError(null); setPasscode(''); }}
+            style={{ background: 'transparent', border: 'none', color: '#666', cursor: 'pointer', fontSize: '1rem', padding: '6px' }}
+          >رجوع</button>
         </div>
       )}
 

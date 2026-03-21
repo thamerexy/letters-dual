@@ -26,7 +26,7 @@ export const Game: React.FC = () => {
   const [showPlayerPanel, setShowPlayerPanel] = useState(false);
   const [showWarningDialog, setShowWarningDialog] = useState<'reset' | 'home' | null>(null);
   const [joinNotification, setJoinNotification] = useState<string | null>(null);
-  const { playCorrect, playWrong } = useAudio();
+  const { playCorrect, playWrong, playRed, playGreen } = useAudio();
   const { isActive: wakeLockActive, toggleWakeLock } = useWakeLock();
   
   const prevPlayersCount = useRef(players.length);
@@ -43,15 +43,13 @@ export const Game: React.FC = () => {
     prevPlayersCount.current = players.length;
   }, [players]);
 
-  // Arabic TTS for buzzers
+  // Custom Arabic Audio for buzzers
   useEffect(() => {
     if (buzzQueue.length === 1 && !!activeHexId) {
-      const teamLabel = buzzQueue[0].team === 'team1' ? 'الفريق الأحمر' : 'الفريق الأخضر';
-      const utterance = new SpeechSynthesisUtterance(teamLabel);
-      utterance.lang = 'ar-SA';
-      window.speechSynthesis.speak(utterance);
+      if (buzzQueue[0].team === 'team1') playRed();
+      else if (buzzQueue[0].team === 'team2') playGreen();
     }
-  }, [buzzQueue, activeHexId]);
+  }, [buzzQueue, activeHexId, playRed, playGreen]);
   const [scale, setScale] = useState(1);
   const [isLandscape, setIsLandscape] = useState(false);
 
