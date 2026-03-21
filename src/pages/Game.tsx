@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Board } from '../components/Board';
 import { useNavigate } from 'react-router-dom';
-import { RotateCcw, Home, Undo2, Zap } from 'lucide-react';
+import { RotateCcw, Home, Undo2, Zap, Users } from 'lucide-react';
 import { useGameStore } from '../store/gameStore';
 import type { Team } from '../store/gameStore';
 import { createPortal } from 'react-dom';
@@ -21,7 +21,8 @@ export const Game: React.FC = () => {
     activeHexId, activeQuestion, claimHex, nextTurn,
     setActiveQuestion, board, currentTurn, winner, matchWinner
   } = useGameStore();
-  const { buzzQueue, clearBuzzes } = useRoomStore();
+  const { buzzQueue, clearBuzzes, roomCode, players } = useRoomStore();
+  const [showPlayerPanel, setShowPlayerPanel] = useState(false);
   const [showWarningDialog, setShowWarningDialog] = useState<'reset' | 'home' | null>(null);
   const { playCorrect, playWrong } = useAudio();
   const [scale, setScale] = useState(1);
@@ -41,10 +42,10 @@ export const Game: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Sync board state to all players whenever it changes
+  // Sync board state to all players whenever it changes OR a new player joins
   useEffect(() => {
     broadcastGameState({ board, currentTurn, team1RoundsWon, team2RoundsWon, winner, matchWinner });
-  }, [board, currentTurn, team1RoundsWon, team2RoundsWon, winner, matchWinner]);
+  }, [board, currentTurn, team1RoundsWon, team2RoundsWon, winner, matchWinner, players.length]);
 
   // Broadcast when question becomes active (without answer)
   const prevActiveRef = useRef<string | null>(null);
@@ -93,6 +94,18 @@ export const Game: React.FC = () => {
       background: 'radial-gradient(circle at 10% 20%, rgb(30,30,30) 0%, rgb(15,15,15) 100%)',
       overflow: 'hidden',
     }}>
+
+      {/* Room code badge — always visible */}
+      <div style={{ position: 'absolute', top: '12px', right: '14px', zIndex: 50, background: 'rgba(0,0,0,0.65)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)', borderRadius: '10px', padding: '4px 12px', textAlign: 'center', direction: 'ltr' }}>
+        <div style={{ fontSize: '0.55rem', color: '#666', letterSpacing: '1px', fontFamily: "'Cairo', sans-serif" }}>ROOM</div>
+        <div style={{ fontSize: '1.05rem', fontWeight: '900', letterSpacing: '5px', color: '#ff6b6b', fontFamily: "'Cairo', sans-serif" }}>{roomCode}</div>
+      </div>
+
+      {/* Mid-game players button */}
+      <button onClick={() => setShowPlayerPanel(true)} style={{ position: 'absolute', top: '12px', left: '14px', zIndex: 50, background: 'rgba(0,0,0,0.65)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)', borderRadius: '10px', padding: '7px 12px', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: "'Cairo', sans-serif", fontSize: '0.85rem', fontWeight: '700', direction: 'rtl', }}>
+        <Users size={16} />
+        اللاعبون ({players.length})
+      </button>
       <div style={{
         transform: `scale(${scale})`,
         display: 'flex', flexDirection: isLandscape ? 'row' : 'column',
@@ -216,6 +229,46 @@ export const Game: React.FC = () => {
       )}
 
       <style>{`@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }`}</style>
+
+      {/* Mid-game Player Management Panel */}
+      {showPlayerPanel && createPortal(
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, direction: 'rtl', fontFamily: "'Cairo', sans-serif" }}>
+          <div style={{ background: 'linear-gradient(135deg, #1e2030, #14161f)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', padding: '24px', width: '90%', maxWidth: '460px', maxHeight: '80vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.4rem', color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Users size={20} /> إدارة اللاعبين
+              </h3>
+              <div style={{ background: 'rgba(255,107,107,0.15)', border: '1px solid rgba(255,107,107,0.35)', borderRadius: '8px', padding: '2px 10px', color: '#ff6b6b', fontSize: '1rem', fontWeight: '900', letterSpacing: '4px' }}>{roomCode}</div>
+            </div>
+            <p style={{ color: '#666', fontSize: '0.85rem', margin: '0 0 14px' }}>اللاعبون المتصلون الآن — يمكن للاعب إعادة الانضمام بنفس الرمز</p>
+            {players.length === 0 ? (
+              <div style={{ color: '#555', textAlign: 'center', padding: '20px', fontSize: '0.95rem' }}>لا يوجد لاعبون متصلون حالياً</div>
+            ) : (
+              players.map((player) => {
+                const tc = player.team === 'team1' ? '#ff416c' : player.team === 'team2' ? '#00b09b' : '#555';
+                const tl = player.team === 'team1' ? 'أحمر' : player.team === 'team2' ? 'أخضر' : 'بدون فريق';
+                return (
+                  <div key={player.clientId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.04)', border: `1px solid ${player.team !== 'none' ? tc + '35' : 'rgba(255,255,255,0.06)'}`, borderRadius: '12px', padding: '10px 12px', marginBottom: '8px', transition: 'border-color 0.3s' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: `${tc}22`, border: `2px solid ${tc}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', fontWeight: '800', color: tc, flexShrink: 0 }}>{player.name[0]}</div>
+                      <div>
+                        <div style={{ fontSize: '0.95rem', fontWeight: '700', color: 'white' }}>{player.name}</div>
+                        <div style={{ fontSize: '0.72rem', color: tc }}>{tl}</div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '5px' }}>
+                      <button onClick={() => { import('../services/realtime').then(r => r.broadcastTeamAssign(player.clientId, 'team1')); }} style={{ padding: '6px 10px', background: player.team === 'team1' ? '#ff416c' : 'rgba(255,65,108,0.12)', border: '1px solid rgba(255,65,108,0.4)', borderRadius: '8px', color: 'white', fontSize: '0.78rem', fontWeight: '700', cursor: 'pointer' }}>أحمر</button>
+                      <button onClick={() => { import('../services/realtime').then(r => r.broadcastTeamAssign(player.clientId, 'team2')); }} style={{ padding: '6px 10px', background: player.team === 'team2' ? '#00b09b' : 'rgba(0,176,155,0.12)', border: '1px solid rgba(0,176,155,0.4)', borderRadius: '8px', color: 'white', fontSize: '0.78rem', fontWeight: '700', cursor: 'pointer' }}>أخضر</button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+            <button onClick={() => setShowPlayerPanel(false)} style={{ marginTop: '10px', width: '100%', padding: '11px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '12px', color: '#aaa', fontSize: '1rem', cursor: 'pointer', fontFamily: "'Cairo', sans-serif" }}>إغلاق</button>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };
