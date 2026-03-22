@@ -384,10 +384,10 @@ export const GamePlayer: React.FC = () => {
             <div style={{ maxHeight: '35vh', overflowY: 'auto', marginBottom: '25px', padding: '0 5px' }}>
               <p style={{ 
                 fontSize: '1.4rem', fontWeight: '900', color: 'var(--text-primary)', lineHeight: 1.5, margin: 0,
-                fontStyle: (hideQuestionFromPlayers && !firstBuzz) ? 'italic' : 'normal',
-                opacity: (hideQuestionFromPlayers && !firstBuzz) ? 0.6 : 1
+                fontStyle: hideQuestionFromPlayers ? 'italic' : 'normal',
+                opacity: hideQuestionFromPlayers ? 0.6 : 1
               }}>
-                {hideQuestionFromPlayers && !firstBuzz 
+                {hideQuestionFromPlayers 
                   ? 'المشرف يقرأ السؤال الآن... استعد للضغط!' 
                   : currentQuestion.question}
               </p>

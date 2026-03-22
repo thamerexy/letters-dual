@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Users, Download } from 'lucide-react';
+import { Shield, Users, Download, HelpCircle } from 'lucide-react';
 import { fetchAllQuestions } from '../services/questions';
 import { generateRoomCode, useRoomStore } from '../store/roomStore';
 import type { PlayerPresence } from '../store/roomStore';
@@ -305,6 +305,24 @@ export const Welcome: React.FC = () => {
         <div style={{ fontWeight: '800', opacity: 0.6 }}>Created by:</div>
         <div style={{ fontWeight: '950', color: 'var(--text-primary)' }}>thamerex@outlook.com</div>
       </div>
+
+      {mode === 'select' && (
+        <button
+          onClick={() => navigate('/tutorial')}
+          style={{
+            marginTop: '20px', display: 'flex', alignItems: 'center', gap: '8px',
+            padding: '10px 20px', background: 'white', border: '1px solid var(--glass-border)',
+            borderRadius: '40px', color: 'var(--text-secondary)', cursor: 'pointer',
+            fontSize: '1rem', fontWeight: '800', transition: 'all 0.2s',
+            boxShadow: 'var(--shadow-sm)'
+          }}
+          onMouseOver={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.color = 'var(--team2)'; }}
+          onMouseOut={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+        >
+          <HelpCircle size={18} />
+          شرح اللعبة (Tutorial)
+        </button>
+      )}
 
       <style>{`
         @keyframes fadeInDown { from { opacity:0; transform:translateY(-25px); } to { opacity:1; transform:translateY(0); } }
