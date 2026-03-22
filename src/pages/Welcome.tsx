@@ -114,7 +114,7 @@ export const Welcome: React.FC = () => {
       {/* Logo */}
       <div style={{ marginBottom: '28px', animation: 'fadeInDown 0.8s ease-out' }}>
         <img src="./logo.png" alt="الحروف ثنائية" style={{
-          width: '160px', height: 'auto', objectFit: 'contain'
+          width: 'min(85vw, 420px)', height: 'auto', objectFit: 'contain'
         }} />
       </div>
 
