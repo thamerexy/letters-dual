@@ -31,5 +31,5 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./dist/
-          server-dir: ./public_html/
-          dangerous-clean-slate: false # Set to true if you want to delete existing files on the server that are not in dist
+          server-dir: ./
+          dangerous-clean-slate: false
