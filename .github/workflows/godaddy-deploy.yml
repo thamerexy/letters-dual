@@ -1,4 +1,4 @@
-# Deployment trigger: Verified secrets configuration
+# Deployment trigger: Final root-level upload
 name: Deploy to GoDaddy
 
 on:
