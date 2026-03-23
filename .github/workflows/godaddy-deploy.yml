@@ -27,15 +27,6 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: 🧹 Cleanup 'themerex' folder
-        run: |
-          npm install basic-ftp
-          node cleanup-ftp.js
-        env:
-          FTP_SERVER: ${{ secrets.FTP_SERVER }}
-          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
-          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-
       - name: 📂 Sync files to GoDaddy
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -43,5 +34,5 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./dist/
-          server-dir: ../
+          server-dir: ./
           dangerous-clean-slate: false
